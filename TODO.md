@@ -1,0 +1,3 @@
+- [ ] Make the DrawingPanel scroll dynamically
+- [ ] Hide opening configuration at start and make it appear dynamically
+- [ ] PDF export
