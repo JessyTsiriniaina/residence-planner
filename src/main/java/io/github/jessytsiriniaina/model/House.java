@@ -8,9 +8,17 @@ public class House {
     private double height;
     private List<Room> rooms = new ArrayList<>();
 
-    //Maybe need coordinates too???
+    private double x;
+    private double y;
 
     public House(double width, double height) {
+        this.width = width;
+        this.height = height;
+    }
+
+    public House(double x, double y, double width, double height) {
+        this.x = x;
+        this.y = y;
         this.width = width;
         this.height = height;
     }

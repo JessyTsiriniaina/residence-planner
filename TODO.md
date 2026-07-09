@@ -1,3 +1,4 @@
-- [ ] Make the DrawingPanel scroll dynamically
-- [ ] Hide opening configuration at start and make it appear dynamically
+- [x] Make the DrawingPanel scroll dynamically
+- [x] Hide opening configuration at start and make it appear dynamically
 - [ ] PDF export
+- [ ] Clear changingPanel inputs on hide
