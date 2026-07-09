@@ -6,6 +6,8 @@ import io.github.jessytsiriniaina.logic.ScaleConverter;
 import io.github.jessytsiriniaina.logic.Validator;
 import io.github.jessytsiriniaina.model.House;
 import io.github.jessytsiriniaina.model.Land;
+import io.github.jessytsiriniaina.model.Room;
+
 
 import javax.swing.*;
 import java.awt.*;
@@ -47,7 +49,10 @@ public class MainFrame extends JFrame {
     private JButton resetButton;
 
     private JPanel changingPanel;
+    private JTextField textField1;
+    private JTextField textField2;
     private CardLayout cardLayout;
+
     JPanel constraintManagementPanel = new Constraint(this).getConstraintPanel();
     JPanel roomManagementPanel = new RoomManagement(this).getRoomManagementPanel();
     JPanel emptyPanel = new JPanel();
@@ -56,6 +61,11 @@ public class MainFrame extends JFrame {
     private static final String ROOM = "ROOM";
     private static final String CONSTRAINT = "CONSTRAINT";
 
+    private DefaultListModel<Room> roomListModel = new DefaultListModel<>();
+    private DefaultListModel<io.github.jessytsiriniaina.model.Constraint> constraintListModel = new DefaultListModel<>();
+
+
+
     private void createUIComponents() {
         drawingPanel = new DrawingPanel();
     }
@@ -63,6 +73,7 @@ public class MainFrame extends JFrame {
     public MainFrame() {
         this.cardLayout = (CardLayout) changingPanel.getLayout();
         setup();
+
         addRoomButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -73,6 +84,20 @@ public class MainFrame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 showConstraintManagementPanel();
+            }
+        });
+        removeRoomButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                int selected = roomList.getSelectedIndex();
+                if(selected != 1) roomListModel.remove(selected);
+            }
+        });
+        removeConstraintButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                int selected = constraintList.getSelectedIndex();
+                if(selected != 1) constraintListModel.remove(selected);
             }
         });
     }
@@ -90,6 +115,9 @@ public class MainFrame extends JFrame {
         changingPanel.add(roomManagementPanel, ROOM);
 
         hideChangingPanel();
+
+        roomList.setModel(roomListModel);
+        constraintList.setModel(constraintListModel);
     }
 
     public void hideChangingPanel() {
@@ -105,5 +133,17 @@ public class MainFrame extends JFrame {
     private void showConstraintManagementPanel() {
         changingPanel.setVisible(true);
         cardLayout.show(changingPanel, CONSTRAINT);
+    }
+
+    public void addRoom(Room room) {
+        roomListModel.addElement(room);
+    }
+
+    public DefaultListModel<Room> getRoomListModel() {
+        return roomListModel;
+    }
+
+    public void addConstraint(io.github.jessytsiriniaina.model.Constraint constraint) {
+        constraintListModel.addElement(constraint);
     }
 }

@@ -22,4 +22,9 @@ public class RoomRelationship {
     public ConstraintType getType() {
         return type;
     }
+
+    @Override
+    public String toString() {
+        return room1.toString() + " " + room2.toString();
+    }
 }
