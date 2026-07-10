@@ -96,4 +96,21 @@ public class Room {
                 this.y < other.y + other.height &&
                 this.y + this.height > other.y;
     }
+
+    public void changeTo(Room room) {
+        if(room == null) return;
+        this.name = room.getName();
+        this.width = room.getWidth();
+        this.height = room.getHeight();
+
+        this.clearDoors();
+        for(Door d: room.getDoors()) {
+            addDoor(d);
+        }
+
+        this.clearWindows();
+        for(Window w: room.getWindows()) {
+            addWindow(w);
+        }
+    }
 }

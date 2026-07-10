@@ -1,4 +1,7 @@
 - [x] Make the DrawingPanel scroll dynamically
 - [x] Hide opening configuration at start and make it appear dynamically
 - [ ] PDF export
-- [ ] Clear changingPanel inputs on hide
+- [x] Clear changingPanel inputs on hide
+- [x] When a room is deleted, delete all constraint containing this room too (same thing with modification)
+- [ ] when changing panel already shown, doube click in list element should make details appear in the changing panel
+- [ ] fix size changing bug in the room management panel

@@ -13,6 +13,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.Objects;
 
 public class MainFrame extends JFrame {
     private Land land;
@@ -29,13 +32,13 @@ public class MainFrame extends JFrame {
     private JPanel bottomPanel;
     private JTextArea reportArea;
     private JPanel landPanel;
-    private JTextField landWidth;
-    private JTextField landHeight;
+    private JTextField landWidthField;
+    private JTextField landHeightField;
     private JPanel scalePanel;
-    private JTextField scale;
+    private JTextField scaleField;
     private JPanel housePanel;
-    private JTextField houseWidth;
-    private JTextField houseHeight;
+    private JTextField houseWidthField;
+    private JTextField houseHeightField;
     private JList roomList;
     private JButton addRoomButton;
     private JButton removeRoomButton;
@@ -49,17 +52,20 @@ public class MainFrame extends JFrame {
     private JButton resetButton;
 
     private JPanel changingPanel;
-    private JTextField textField1;
-    private JTextField textField2;
+    private JTextField houseXField;
+    private JTextField houseYField;
     private CardLayout cardLayout;
 
-    JPanel constraintManagementPanel = new Constraint(this).getConstraintPanel();
-    JPanel roomManagementPanel = new RoomManagement(this).getRoomManagementPanel();
-    JPanel emptyPanel = new JPanel();
+    private final Constraint constraintMananagement = new Constraint(this);
+    private final RoomManagement roomManagement = new RoomManagement(this);
 
-    private static final String EMPTY = "EMPTY";
-    private static final String ROOM = "ROOM";
-    private static final String CONSTRAINT = "CONSTRAINT";
+    private final JPanel constraintManagementPanel = constraintMananagement.getConstraintPanel();
+    private final JPanel roomManagementPanel = roomManagement.getRoomManagementPanel();
+    private final JPanel emptyPanel = new JPanel();
+
+    private final String EMPTY = "EMPTY";
+    private final String ROOM = "ROOM";
+    private final String CONSTRAINT = "CONSTRAINT";
 
     private DefaultListModel<Room> roomListModel = new DefaultListModel<>();
     private DefaultListModel<io.github.jessytsiriniaina.model.Constraint> constraintListModel = new DefaultListModel<>();
@@ -77,20 +83,34 @@ public class MainFrame extends JFrame {
         addRoomButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                showRoomManagementPanel();
+                showRoomManagementPanel(null);
             }
         });
         addConstraintButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                showConstraintManagementPanel();
+                showConstraintManagementPanel(null);
             }
         });
         removeRoomButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 int selected = roomList.getSelectedIndex();
-                if(selected != 1) roomListModel.remove(selected);
+
+                if (selected != -1) {
+                    Room roomToDelete = roomListModel.get(selected);
+
+                    for (int i = constraintListModel.getSize() - 1; i >= 0; i--) {
+                        io.github.jessytsiriniaina.model.Constraint actualConstraint = constraintListModel.get(i);
+
+                        if (Objects.equals(actualConstraint.getRoom1(), roomToDelete)
+                                || Objects.equals(actualConstraint.getRoom2(), roomToDelete)) {
+                            constraintListModel.remove(i);
+                        }
+                    }
+
+                    roomListModel.remove(selected);
+                }
             }
         });
         removeConstraintButton.addActionListener(new ActionListener() {
@@ -98,6 +118,36 @@ public class MainFrame extends JFrame {
             public void actionPerformed(ActionEvent actionEvent) {
                 int selected = constraintList.getSelectedIndex();
                 if(selected != 1) constraintListModel.remove(selected);
+            }
+        });
+        constraintList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                //super.mouseClicked(e);
+                if (e.getClickCount() == 2) {
+                    int index = constraintList.locationToIndex(e.getPoint());
+                    if (index != -1) {
+                        showConstraintManagementPanel(constraintListModel.getElementAt(index));
+                    }
+                }
+            }
+        });
+        roomList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                //super.mouseClicked(e);
+                if (e.getClickCount() == 2) {
+                    int index = roomList.locationToIndex(e.getPoint());
+                    if (index != -1) {
+                        showRoomManagementPanel(roomListModel.getElementAt(index));
+                    }
+                }
+            }
+        });
+        generateButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                generatePlan();
             }
         });
     }
@@ -118,6 +168,10 @@ public class MainFrame extends JFrame {
 
         roomList.setModel(roomListModel);
         constraintList.setModel(constraintListModel);
+
+        roomListModel.addElement(new Room("Chambre 1", 12, 12));
+        roomListModel.addElement(new Room("Salon", 12, 12));
+        roomListModel.addElement(new Room("Cuisine", 12, 12));
     }
 
     public void hideChangingPanel() {
@@ -125,12 +179,18 @@ public class MainFrame extends JFrame {
         changingPanel.setVisible(false);
     }
 
-    private void showRoomManagementPanel() {
+    private void showRoomManagementPanel(Room room) {
+        if(!(room == null)) {
+            roomManagement.setExistingRoom(room);
+        }
         changingPanel.setVisible(true);
         cardLayout.show(changingPanel, ROOM);
     }
 
-    private void showConstraintManagementPanel() {
+    private void showConstraintManagementPanel(io.github.jessytsiriniaina.model.Constraint constraint) {
+        if(!(constraint == null)) {
+            constraintMananagement.setExistingConstraint(constraint);
+        }
         changingPanel.setVisible(true);
         cardLayout.show(changingPanel, CONSTRAINT);
     }
@@ -145,5 +205,21 @@ public class MainFrame extends JFrame {
 
     public void addConstraint(io.github.jessytsiriniaina.model.Constraint constraint) {
         constraintListModel.addElement(constraint);
+    }
+
+    public void updateConstraintList() {
+        constraintList.updateUI();
+    }
+
+    public DefaultListModel<io.github.jessytsiriniaina.model.Constraint> getConstraintListModel() {
+        return constraintListModel;
+    }
+
+    public void updateRoomList() {
+        roomList.updateUI();
+    }
+
+    private void generatePlan() {
+
     }
 }
