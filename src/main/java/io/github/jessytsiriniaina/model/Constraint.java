@@ -6,7 +6,7 @@ public class Constraint {
     private ConstraintType type;
     private boolean satisfied;
 
-    public Constraint(Room room1, Room room2,ConstraintType type) {
+    public Constraint(Room room1, Room room2, ConstraintType type) {
         this.room1 = room1;
         this.room2 = room2;
         this.type = type;
@@ -24,8 +24,32 @@ public class Constraint {
         return type;
     }
 
-    public boolean isSatisfied() { return satisfied; }
-    public void setSatisfied(boolean satisfied) { this.satisfied = satisfied; }
+    public void setRoom1(Room room1) {
+        this.room1 = room1;
+    }
+
+    public void setRoom2(Room room2) {
+        this.room2 = room2;
+    }
+
+    public void setType(ConstraintType type) {
+        this.type = type;
+    }
+
+    public void changeTo(Constraint constraint) {
+        if (constraint == null) return;
+        this.setRoom1(constraint.getRoom1());
+        this.setRoom2(constraint.getRoom2());
+        this.setType(constraint.getType());
+    }
+
+    public boolean isSatisfied() {
+        return satisfied;
+    }
+
+    public void setSatisfied(boolean satisfied) {
+        this.satisfied = satisfied;
+    }
 
     @Override
     public String toString() {

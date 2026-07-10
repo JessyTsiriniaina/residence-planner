@@ -10,4 +10,9 @@ public class Window {
     public Position getPosition() {
         return position;
     }
+
+    @Override
+    public String toString() {
+        return "Window " + position;
+    }
 }
