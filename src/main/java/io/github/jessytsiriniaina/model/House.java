@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class House {
+    private String name = "Maison 1";
     private double width;
     private double height;
     private List<Room> rooms = new ArrayList<>();
@@ -12,15 +13,29 @@ public class House {
     private double y;
 
     public House(double width, double height) {
+        if (width <= 0 || height <= 0) {
+            throw new IllegalArgumentException("Les dimensions de la maison doivent être positives.");
+        }
         this.width = width;
         this.height = height;
     }
 
     public House(double x, double y, double width, double height) {
+        if (width <= 0 || height <= 0) {
+            throw new IllegalArgumentException("Les dimensions de la maison doivent être positives.");
+        }
         this.x = x;
         this.y = y;
         this.width = width;
         this.height = height;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public double getWidth() {

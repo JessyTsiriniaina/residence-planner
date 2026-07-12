@@ -3,6 +3,11 @@ package io.github.jessytsiriniaina.model;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents a piece of land.
+ * Starting from Phase 2, a single Land terrain can support multiple houses (List<House>)
+ * to allow advanced configurations, while maintaining backward-compatible single-house methods.
+ */
 public class Land {
     private double width;
     private double height;
@@ -39,6 +44,16 @@ public class Land {
 
     public List<House> getHouses() {
         return houses;
+    }
+
+    public void setHouses(List<House> houses) {
+        this.houses = houses != null ? houses : new ArrayList<>();
+    }
+
+    public void addHouse(House house) {
+        if (house != null) {
+            houses.add(house);
+        }
     }
 
     public House getHouse() {

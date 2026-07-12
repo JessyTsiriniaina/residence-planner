@@ -38,9 +38,6 @@ public class Room {
     }
 
     public void setY(double y) {
-        if (y < 0) {
-            throw new IllegalArgumentException("La coordonnée Y ne peut pas être négative.");
-        }
         this.y = y;
     }
 
@@ -49,9 +46,6 @@ public class Room {
     }
 
     public void setX(double x) {
-        if (x < 0) {
-            throw new IllegalArgumentException("La coordonnée X ne peut pas être négative.");
-        }
         this.x = x;
     }
 

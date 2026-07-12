@@ -15,8 +15,6 @@ public class SketchRenderer {
         int tw = sc.toPixels(land.getWidth());
         int th = sc.toPixels(land.getHeight());
 
-        House house = land.getHouse();
-
         // Draw Terrain Boundary
         g.setColor(new Color(240, 255, 240));
         g.fillRect(0, 0, tw, th);
@@ -26,32 +24,29 @@ public class SketchRenderer {
         g.setFont(new Font("Arial", Font.PLAIN , 11));
         g.drawString(String.format("Terrain: %.1f m x %.1f m", land.getWidth(), land.getHeight()), 5, th - 5);
 
-        // House position relative to terrain (simple centering or at 0,0)
-        // For now, let's assume house is placed at (0,0) inside the drawing context provided by DrawingPanel
-        // which already centered the terrain.
+        // Render all houses on the land
+        for (House house : land.getHouses()) {
+            if (house != null) {
+                int w = sc.toPixels(house.getWidth());
+                int h = sc.toPixels(house.getHeight());
+                int x = sc.toPixels(house.getX());
+                int y = sc.toPixels(house.getY());
 
-        if(!(house == null)) {
-            int w = sc.toPixels(house.getWidth());
-            int h = sc.toPixels(house.getHeight());
-            int x = sc.toPixels(house.getX());
-            int y = sc.toPixels(house.getY());
+                // Draw House Boundary
+                g.setColor(Color.BLACK);
+                g.setStroke(new BasicStroke(2));
+                g.drawRect(x, y, w, h);
 
-            // Draw House Boundary
-            g.setColor(Color.BLACK);
-            g.setStroke(new BasicStroke(2));
-            g.drawRect(x, y, w, h);
+                // Draw House Dimensions
+                g.setFont(new Font("Arial", Font.PLAIN, 11));
+                g.drawString(String.format("%s: %.1f m x %.1f m (%.1f m²)", house.getName(), house.getWidth(), house.getHeight(), house.getWidth() * house.getHeight()), sc.toPixels(house.getX() + 1), sc.toPixels((house.getHeight() + house.getY() + 2)));
 
-            // Draw House Dimensions
-            g.setFont(new Font("Arial", Font.PLAIN, 11));
-            g.drawString(String.format("%.1f m x %.1f m (%.1f m²)", house.getWidth(), house.getHeight(), house.getWidth() * house.getHeight()), sc.toPixels(house.getX() + 1), sc.toPixels((house.getHeight() + house.getY() + 2)));
-
-            // Draw Rooms
-
-            for (Room room : house.getRooms()) {
-                drawRoom(g, room, sc);
+                // Draw Rooms
+                for (Room room : house.getRooms()) {
+                    drawRoom(g, room, sc);
+                }
             }
         }
-
     }
 
     private void drawRoom(Graphics2D g, Room room, ScaleConverter sc) {
