@@ -4,9 +4,7 @@ import io.github.jessytsiriniaina.logic.ConstraintManager;
 import io.github.jessytsiriniaina.logic.PlanGenerator;
 import io.github.jessytsiriniaina.logic.ScaleConverter;
 import io.github.jessytsiriniaina.logic.Validator;
-import io.github.jessytsiriniaina.model.House;
-import io.github.jessytsiriniaina.model.Land;
-import io.github.jessytsiriniaina.model.Room;
+import io.github.jessytsiriniaina.model.*;
 
 
 import javax.swing.*;
@@ -15,11 +13,12 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class MainFrame extends JFrame {
     private Land land;
-    private House house;
     private ConstraintManager constraintManager;
     private PlanGenerator generator;
     private Validator validator;
@@ -73,12 +72,25 @@ public class MainFrame extends JFrame {
 
 
     private void createUIComponents() {
-        drawingPanel = new DrawingPanel();
+        drawingPanel = new DrawingPanel(new Land(), new ScaleConverter());
     }
 
     public MainFrame() {
         this.cardLayout = (CardLayout) changingPanel.getLayout();
+        scaleConverter =  new ScaleConverter();
+        constraintManager = new ConstraintManager();
+        generator = new PlanGenerator();
+        land = new Land();
+
         setup();
+
+        scaleField.setText("10");
+        landWidthField.setText("50");
+        landHeightField.setText("50");
+        houseWidthField.setText("30");
+        houseHeightField.setText("30");
+        houseXField.setText("10");
+        houseYField.setText("10");
 
         addRoomButton.addActionListener(new ActionListener() {
             @Override
@@ -117,7 +129,7 @@ public class MainFrame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 int selected = constraintList.getSelectedIndex();
-                if(selected != 1) constraintListModel.remove(selected);
+                if(selected != -1) constraintListModel.remove(selected);
             }
         });
         constraintList.addMouseListener(new MouseAdapter() {
@@ -148,6 +160,12 @@ public class MainFrame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 generatePlan();
+            }
+        });
+        resetButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                reset();
             }
         });
     }
@@ -220,6 +238,64 @@ public class MainFrame extends JFrame {
     }
 
     private void generatePlan() {
+        double scale = Double.parseDouble(scaleField.getText());
+        double landWidth = Double.parseDouble((landWidthField.getText()));
+        double landHeight = Double.parseDouble((landHeightField.getText()));
+        double houseWidth = Double.parseDouble(houseWidthField.getText());
+        double houseHeight = Double.parseDouble(houseHeightField.getText());
+        double houseX = Double.parseDouble(houseXField.getText());
+        double houseY = Double.parseDouble(houseYField.getText());
 
+        scaleConverter.setPixelsPerMeter((int) scale);
+
+        land.setWidth(landWidth);
+        land.setHeight(landHeight);
+        House house = new House(houseX, houseY, houseWidth, houseHeight);
+        land.setHouse(house);
+
+        drawingPanel.setLand(land);
+        drawingPanel.setScaleConverter(scaleConverter);
+
+        List<Room> rooms = getRoomsFromInput();
+        constraintManager.clear();
+        setupConstraints(rooms, constraintManager);
+
+        generator.generate(land, rooms, constraintManager);
+        drawingPanel.repaint();
+    }
+
+    private void setupConstraints(List<Room> rooms, ConstraintManager cm) {
+        for (int i = 0; i < constraintListModel.size(); i++) {
+            String s = constraintListModel.get(i).toString();
+            String[] parts = s.split(",");
+            Room r1 = findRoomByName(rooms, parts[0]);
+            Room r2 = findRoomByName(rooms, parts[2]);
+            ConstraintType type = ConstraintType.valueOf(parts[1]);
+            if (r1 != null && r2 != null) {
+                cm.addRelationship(new RoomRelationship(r1, r2, type));
+            }
+        }
+    }
+
+    private Room findRoomByName(List<Room> rooms, String name) {
+        for (Room r : rooms) if (r.getName().equals(name)) return r;
+        return null;
+    }
+
+    public List<Room> getRoomsFromInput() {
+        List<Room> rooms = new ArrayList<>();
+        for (int i = 0; i < roomListModel.size(); i++) {
+            rooms.add(roomListModel.get(i));
+        }
+        return rooms;
+    }
+
+    private void reset() {
+        land.setHouse(null);
+        constraintListModel.clear();
+        roomListModel.clear();
+        constraintManager.clear();
+        //bottomPanel.clear();
+        drawingPanel.repaint();
     }
 }

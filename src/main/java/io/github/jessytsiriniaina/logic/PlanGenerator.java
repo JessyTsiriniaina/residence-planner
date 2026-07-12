@@ -1,9 +1,6 @@
 package io.github.jessytsiriniaina.logic;
 
-import io.github.jessytsiriniaina.model.ConstraintType;
-import io.github.jessytsiriniaina.model.House;
-import io.github.jessytsiriniaina.model.Room;
-import io.github.jessytsiriniaina.model.RoomRelationship;
+import io.github.jessytsiriniaina.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +9,8 @@ import java.util.Random;
 public class PlanGenerator {
     private Random random = new Random();
 
-    public void generate(House house, List<Room> roomsToPlace, ConstraintManager constraintManager) {
+    public void generate(Land land, List<Room> roomsToPlace, ConstraintManager constraintManager) {
+        House house= land.getHouse();
         house.clearRooms();
 
         // Simple heuristic: Place largest rooms first
@@ -91,7 +89,7 @@ public class PlanGenerator {
                 if (trySetAndCheck(house, room, other.getX(), other.getY() + other.getHeight())) return true;
                 break;
 
-            //OPPOSITE and NOT_ADJACENT_TO remaining
+            //OPPOSITE, CONNECTED TO and NOT_ADJACENT_TO remaining
         }
         return false;
     }
@@ -114,7 +112,7 @@ public class PlanGenerator {
 
     private boolean isValidPosition(House house, Room room) {
         // Must be within house
-        if (room.getX() < 0 || room.getY() < 0 ||
+        if (room.getX() < house.getX() || room.getY() < house.getY() ||
                 room.getX() + room.getWidth() > house.getWidth() ||
                 room.getY() + room.getHeight() > house.getHeight()) {
             return false;

@@ -6,11 +6,15 @@ import java.util.List;
 public class Land {
     private double width;
     private double height;
-    private List<House> houses = new ArrayList<>();
+    private House house;
 
     public Land(double width, double height) {
         this.width = width;
         this.height = height;
+    }
+
+    public Land() {
+
     }
 
     public double getWidth() {
@@ -21,19 +25,22 @@ public class Land {
         return height;
     }
 
+    public void setHeight(double height) {
+        this.height = height;
+    }
+
+    public void setWidth(double width) {
+        this.width = width;
+    }
+
     public double getArea() {
         return width * height;
     }
 
-    public List<House> getHouses() {
-        return houses;
+    public House getHouse() {
+        return house;
     }
 
-    public void addHouses(House house) {
-        houses.add(house);
-    }
+    public void setHouse(House house) {this.house = house;}
 
-    public void clearHouses() {
-        houses.clear();
-    }
 }

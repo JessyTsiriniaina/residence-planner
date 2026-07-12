@@ -1,11 +1,7 @@
 package io.github.jessytsiriniaina.logic;
 
 public class ScaleConverter {
-    private int pixelsPerMeter;
-
-    public ScaleConverter(int pixelsPerMeter) {
-        this.pixelsPerMeter = pixelsPerMeter;
-    }
+    private int pixelsPerMeter = 0;
 
     public int toPixels(double meters) {
         return (int) Math.round(meters * pixelsPerMeter);
