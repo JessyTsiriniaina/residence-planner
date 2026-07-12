@@ -31,6 +31,14 @@ public class House {
         return height;
     }
 
+    public double getY() {
+        return y;
+    }
+
+    public double getX() {
+        return x;
+    }
+
     public List<Room> getRooms() {
         return rooms;
     }

@@ -53,6 +53,6 @@ public class Constraint {
 
     @Override
     public String toString() {
-        return room1.getName() + " " + type + " " + room2.getName();
+        return room1.getName() + "," + type + "," + room2.getName();
     }
 }
