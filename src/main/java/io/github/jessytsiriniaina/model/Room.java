@@ -13,8 +13,7 @@ public class Room {
     private double x;
     private double y;
 
-    private List<Door> doors = new ArrayList<>();
-    private List<Window> windows = new ArrayList<>();
+    private List<Opening> openings = new ArrayList<>();
 
     public Room(String name, double width, double height) {
         if (width <= 0 || height <= 0) {
@@ -71,28 +70,88 @@ public class Room {
         this.width = width;
     }
 
+    public List<Opening> getOpenings() {
+        return openings;
+    }
+
+    public void addOpening(Opening opening) {
+        if (opening != null) {
+            openings.add(opening);
+        }
+    }
+
+    public void clearOpenings() {
+        openings.clear();
+    }
+
+    // Helper methods for backward compatibility
+
     public List<Door> getDoors() {
-        return doors;
+        List<Door> list = new ArrayList<>();
+        for (Opening op : openings) {
+            if (op instanceof Door) {
+                list.add((Door) op);
+            }
+        }
+        return list;
     }
 
     public void addDoor(Door door) {
-        doors.add(door);
+        if (door != null) {
+            openings.add(door);
+        }
     }
 
     public void clearDoors() {
-        doors.clear();
+        openings.removeIf(op -> op instanceof Door);
     }
 
     public List<Window> getWindows() {
-        return windows;
+        List<Window> list = new ArrayList<>();
+        for (Opening op : openings) {
+            if (op instanceof Window) {
+                list.add((Window) op);
+            }
+        }
+        return list;
     }
 
     public void addWindow(Window window) {
-        windows.add(window);
+        if (window != null) {
+            openings.add(window);
+        }
     }
 
     public void clearWindows() {
-        windows.clear();
+        openings.removeIf(op -> op instanceof Window);
+    }
+
+    /**
+     * Basic validation to check if openings on the same wall (position) overlap.
+     * We check this for openings that have precise non-zero offsets.
+     */
+    public boolean hasOverlappingOpenings() {
+        for (Position pos : Position.values()) {
+            if (pos == Position.NONE) continue;
+            List<Opening> wallOpenings = new ArrayList<>();
+            for (Opening op : openings) {
+                if (op.getPosition() == pos && op.getOffset() > 0) {
+                    wallOpenings.add(op);
+                }
+            }
+            // Sort by offset
+            wallOpenings.sort((o1, o2) -> Double.compare(o1.getOffset(), o2.getOffset()));
+            for (int i = 0; i < wallOpenings.size() - 1; i++) {
+                Opening current = wallOpenings.get(i);
+                Opening next = wallOpenings.get(i + 1);
+                double currentEnd = current.getOffset() + current.getWidth() / 2.0;
+                double nextStart = next.getOffset() - next.getWidth() / 2.0;
+                if (currentEnd > nextStart) {
+                    return true; // Overlap detected
+                }
+            }
+        }
+        return false;
     }
 
     @Override
@@ -126,14 +185,9 @@ public class Room {
         this.width = room.getWidth();
         this.height = room.getHeight();
 
-        this.clearDoors();
-        for(Door d: room.getDoors()) {
-            addDoor(d);
-        }
-
-        this.clearWindows();
-        for(Window w: room.getWindows()) {
-            addWindow(w);
+        this.openings.clear();
+        for(Opening op : room.getOpenings()) {
+            this.addOpening(op);
         }
     }
 }

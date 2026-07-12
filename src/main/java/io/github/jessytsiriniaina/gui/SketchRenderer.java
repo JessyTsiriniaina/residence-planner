@@ -77,29 +77,36 @@ public class SketchRenderer {
         g.drawString(dims, x + (w - fm.stringWidth(dims)) / 2, y + h / 2 + 10);
 
         // Draw doors
-        drawOpenings(g, x, y, w, h, room.getDoors(), true);
+        drawOpenings(g, x, y, w, h, room.getDoors(), true, sc);
 
         // Draw windows
-        drawOpenings(g, x, y, w, h, room.getWindows(), false);
+        drawOpenings(g, x, y, w, h, room.getWindows(), false, sc);
     }
 
-    private void drawOpenings(Graphics2D g, int x, int y, int w, int h, List<?> openings, boolean isDoor) {
-        Map<Object, List<Object>> byPos = new HashMap<>();
-        for (Object o : openings) {
-            Object pos = isDoor ? ((Door)o).getPosition() : ((Window)o).getPosition();
-            byPos.computeIfAbsent(pos, k -> new ArrayList<>()).add(o);
+    private void drawOpenings(Graphics2D g, int x, int y, int w, int h, List<? extends Opening> openings, boolean isDoor, ScaleConverter sc) {
+        Map<Position, List<Opening>> byPos = new HashMap<>();
+        for (Opening op : openings) {
+            byPos.computeIfAbsent(op.getPosition(), k -> new ArrayList<>()).add(op);
         }
 
-        for (Map.Entry<Object, List<Object>> entry : byPos.entrySet()) {
-            Object pos = entry.getKey();
-            List<Object> list = entry.getValue();
+        for (Map.Entry<Position, List<Opening>> entry : byPos.entrySet()) {
+            Position pos = entry.getKey();
+            List<Opening> list = entry.getValue();
             int count = list.size();
-            int size = isDoor ? 25 : 35;
 
             for (int i = 0; i < count; i++) {
-                double offsetFrac = (i + 1.0) / (count + 1.0);
+                Opening op = list.get(i);
+                int size = isDoor ? (op instanceof MainEntrance ? 30 : 25) : 35;
+                if (op.getWidth() > 0 && op.getWidth() != 1.0) {
+                    size = sc.toPixels(op.getWidth());
+                }
+
                 if (isDoor) {
-                    g.setColor(new Color(139, 69, 19));
+                    if (op instanceof MainEntrance) {
+                        g.setColor(new Color(220, 20, 60)); // Crimson for Main Entrance
+                    } else {
+                        g.setColor(new Color(139, 69, 19)); // Saddle Brown
+                    }
                     g.setStroke(new BasicStroke(4));
                 } else {
                     g.setColor(new Color(100, 200, 255));
@@ -107,20 +114,40 @@ public class SketchRenderer {
                 }
 
                 int cx, cy;
-                if (pos == Position.NORTH || pos == Position.NORTH) {
-                    cx = x + (int)(w * offsetFrac);
+                if (pos == Position.NORTH) {
+                    if (op.getOffset() > 0) {
+                        cx = x + sc.toPixels(op.getOffset());
+                    } else {
+                        double offsetFrac = (i + 1.0) / (count + 1.0);
+                        cx = x + (int)(w * offsetFrac);
+                    }
                     g.drawLine(cx - size/2, y, cx + size/2, y);
                     if (isDoor) drawDoorSwing(g, cx, y, size, -1);
-                } else if (pos == Position.SOUTH || pos == Position.SOUTH) {
-                    cx = x + (int)(w * offsetFrac);
+                } else if (pos == Position.SOUTH) {
+                    if (op.getOffset() > 0) {
+                        cx = x + sc.toPixels(op.getOffset());
+                    } else {
+                        double offsetFrac = (i + 1.0) / (count + 1.0);
+                        cx = x + (int)(w * offsetFrac);
+                    }
                     g.drawLine(cx - size/2, y + h, cx + size/2, y + h);
                     if (isDoor) drawDoorSwing(g, cx, y + h, size, 1);
-                } else if (pos == Position.EAST || pos == Position.EAST) {
-                    cy = y + (int)(h * offsetFrac);
+                } else if (pos == Position.EAST) {
+                    if (op.getOffset() > 0) {
+                        cy = y + sc.toPixels(op.getOffset());
+                    } else {
+                        double offsetFrac = (i + 1.0) / (count + 1.0);
+                        cy = y + (int)(h * offsetFrac);
+                    }
                     g.drawLine(x + w, cy - size/2, x + w, cy + size/2);
                     if (isDoor) drawDoorSwing(g, x + w, cy, size, 2);
-                } else if (pos == Position.WEST || pos == Position.WEST) {
-                    cy = y + (int)(h * offsetFrac);
+                } else if (pos == Position.WEST) {
+                    if (op.getOffset() > 0) {
+                        cy = y + sc.toPixels(op.getOffset());
+                    } else {
+                        double offsetFrac = (i + 1.0) / (count + 1.0);
+                        cy = y + (int)(h * offsetFrac);
+                    }
                     g.drawLine(x, cy - size/2, x, cy + size/2);
                     if (isDoor) drawDoorSwing(g, x, cy, size, 3);
                 }
