@@ -272,7 +272,7 @@ public class MainFrame extends JFrame {
             Room r2 = findRoomByName(rooms, parts[2]);
             ConstraintType type = ConstraintType.valueOf(parts[1]);
             if (r1 != null && r2 != null) {
-                cm.addRelationship(new RoomRelationship(r1, r2, type));
+                cm.addRelationship(new io.github.jessytsiriniaina.model.Constraint(r1, r2, type));
             }
         }
     }

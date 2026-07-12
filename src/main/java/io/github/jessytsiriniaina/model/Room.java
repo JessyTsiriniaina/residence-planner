@@ -2,6 +2,7 @@ package io.github.jessytsiriniaina.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class Room {
     private String name;
@@ -16,6 +17,9 @@ public class Room {
     private List<Window> windows = new ArrayList<>();
 
     public Room(String name, double width, double height) {
+        if (width <= 0 || height <= 0) {
+            throw new IllegalArgumentException("Les dimensions de la pièce doivent être positives.");
+        }
         this.name = name;
         this.width = width;
         this.height = height;
@@ -34,6 +38,9 @@ public class Room {
     }
 
     public void setY(double y) {
+        if (y < 0) {
+            throw new IllegalArgumentException("La coordonnée Y ne peut pas être négative.");
+        }
         this.y = y;
     }
 
@@ -42,6 +49,9 @@ public class Room {
     }
 
     public void setX(double x) {
+        if (x < 0) {
+            throw new IllegalArgumentException("La coordonnée X ne peut pas être négative.");
+        }
         this.x = x;
     }
 
@@ -50,6 +60,9 @@ public class Room {
     }
 
     public void setHeight(double height) {
+        if (height <= 0) {
+            throw new IllegalArgumentException("La hauteur doit être positive.");
+        }
         this.height = height;
     }
 
@@ -58,6 +71,9 @@ public class Room {
     }
 
     public void setWidth(double width) {
+        if (width <= 0) {
+            throw new IllegalArgumentException("La largeur doit être positive.");
+        }
         this.width = width;
     }
 
@@ -83,6 +99,19 @@ public class Room {
 
     public void clearWindows() {
         windows.clear();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Room room = (Room) o;
+        return Objects.equals(name, room.name);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name);
     }
 
     @Override

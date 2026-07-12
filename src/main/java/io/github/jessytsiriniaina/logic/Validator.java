@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Validator {
+    public static final double DEFAULT_EPSILON = 0.05; // Tolerance
+
     public List<String> validate(House house, ConstraintManager constraintManager) {
         List<String> errors = new ArrayList<>();
 
@@ -29,7 +31,7 @@ public class Validator {
         }
 
         // Positional constraints
-        for (RoomRelationship rel : constraintManager.getRelationships()) {
+        for (Constraint rel : constraintManager.getRelationships()) {
             boolean satisfied = checkRelationship(rel);
         }
 
@@ -43,10 +45,10 @@ public class Validator {
         return errors;
     }
 
-    private boolean checkRelationship(RoomRelationship rel) {
+    private boolean checkRelationship(Constraint rel) {
         Room r1 = rel.getRoom1();
         Room r2 = rel.getRoom2();
-        double epsilon = 0.05; // Tolerance
+        double epsilon = DEFAULT_EPSILON;
 
         switch (rel.getType()) {
             case NEXT_TO:

@@ -6,7 +6,7 @@ import java.util.List;
 public class Land {
     private double width;
     private double height;
-    private House house;
+    private List<House> houses = new ArrayList<>();
 
     public Land(double width, double height) {
         this.width = width;
@@ -37,10 +37,19 @@ public class Land {
         return width * height;
     }
 
-    public House getHouse() {
-        return house;
+    public List<House> getHouses() {
+        return houses;
     }
 
-    public void setHouse(House house) {this.house = house;}
+    public House getHouse() {
+        return houses.isEmpty() ? null : houses.get(0);
+    }
+
+    public void setHouse(House house) {
+        houses.clear();
+        if (house != null) {
+            houses.add(house);
+        }
+    }
 
 }

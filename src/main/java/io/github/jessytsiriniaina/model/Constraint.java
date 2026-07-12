@@ -1,5 +1,7 @@
 package io.github.jessytsiriniaina.model;
 
+import java.util.Objects;
+
 public class Constraint {
     private Room room1;
     private Room room2;
@@ -49,6 +51,21 @@ public class Constraint {
 
     public void setSatisfied(boolean satisfied) {
         this.satisfied = satisfied;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Constraint that = (Constraint) o;
+        return Objects.equals(room1, that.room1) &&
+                Objects.equals(room2, that.room2) &&
+                type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(room1, room2, type);
     }
 
     @Override

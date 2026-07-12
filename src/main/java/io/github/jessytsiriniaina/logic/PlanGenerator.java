@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.Random;
 
 public class PlanGenerator {
+    public static final int MAX_PLACEMENT_ATTEMPTS = 1000;
+    public static final double GRID_ALIGNMENT = 10.0;
+
     private Random random = new Random();
 
     public void generate(Land land, List<Room> roomsToPlace, ConstraintManager constraintManager) {
@@ -26,10 +29,10 @@ public class PlanGenerator {
 
     private boolean attemptPlacement(House house, Room room, ConstraintManager constraintManager) {
         // Try to find a position that satisfies relationships first
-        List<RoomRelationship> related = findRelationshipsForRoom(room, constraintManager);
+        List<Constraint> related = findRelationshipsForRoom(room, constraintManager);
 
         if (!related.isEmpty()) {
-            for (RoomRelationship rel : related) {
+            for (Constraint rel : related) {
                 Room other = (rel.getRoom1() == room) ? rel.getRoom2() : rel.getRoom1();
                 // If the other room is already placed, try to place near it
                 if (house.getRooms().contains(other)) {
@@ -45,14 +48,14 @@ public class PlanGenerator {
         //**** TO ENHANCE ****//
 
         // Fallback to random placement if relationships can't be satisfied or don't exist
-        int maxAttempts = 1000;
+        int maxAttempts = MAX_PLACEMENT_ATTEMPTS;
         for (int i = 0; i < maxAttempts; i++) {
             double x = random.nextDouble() * (house.getWidth() - room.getWidth());
             double y = random.nextDouble() * (house.getHeight() - room.getHeight());
 
             // Align to a grid (0.1m) for better look
-            x = Math.floor(x * 10) / 10.0;
-            y = Math.floor(y * 10) / 10.0;
+            x = Math.floor(x * GRID_ALIGNMENT) / GRID_ALIGNMENT;
+            y = Math.floor(y * GRID_ALIGNMENT) / GRID_ALIGNMENT;
 
             room.setX(x);
             room.setY(y);
@@ -100,9 +103,9 @@ public class PlanGenerator {
         return isValidPosition(house, room);
     }
 
-    private List<RoomRelationship> findRelationshipsForRoom(Room room, ConstraintManager constraintManager) {
-        List<RoomRelationship> result = new ArrayList<>();
-        for (RoomRelationship rel : constraintManager.getRelationships()) {
+    private List<Constraint> findRelationshipsForRoom(Room room, ConstraintManager constraintManager) {
+        List<Constraint> result = new ArrayList<>();
+        for (Constraint rel : constraintManager.getRelationships()) {
             if (rel.getRoom1() == room || rel.getRoom2() == room) {
                 result.add(rel);
             }

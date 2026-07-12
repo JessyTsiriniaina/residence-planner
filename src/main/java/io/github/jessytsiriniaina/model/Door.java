@@ -1,18 +1,17 @@
 package io.github.jessytsiriniaina.model;
 
-public class Door {
-    private Position position;
+public class Door extends Opening {
 
     public Door(Position position) {
-        this.position = position;
+        super(position);
     }
 
-    public Position getPosition() {
-        return position;
+    public Door(Position position, double offset, double width) {
+        super(position, offset, width);
     }
 
     @Override
     public String toString() {
-        return "Door " + position ;
+        return "Door " + getPosition();
     }
 }
