@@ -80,6 +80,7 @@ public class MainFrame extends JFrame {
         scaleConverter =  new ScaleConverter();
         constraintManager = new ConstraintManager();
         generator = new PlanGenerator();
+        validator = new Validator();
         land = new Land();
 
         setup();
@@ -262,6 +263,21 @@ public class MainFrame extends JFrame {
 
         generator.generate(land, rooms, constraintManager);
         drawingPanel.repaint();
+
+        // Run validation and report feedback
+        List<String> errors = validator.validate(land, constraintManager);
+        if (errors.isEmpty()) {
+            reportArea.setText("=== PLAN GÉNÉRÉ AVEC SUCCÈS ===\nFélicitations ! Le plan a été généré sans aucune erreur ou avertissement.");
+            reportArea.setForeground(new Color(34, 139, 34)); // Dark green
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append("=== RAPPORT DE VALIDATION (" + errors.size() + " avertissement(s)/erreur(s)) ===\n");
+            for (String err : errors) {
+                sb.append("- ").append(err).append("\n");
+            }
+            reportArea.setText(sb.toString());
+            reportArea.setForeground(Color.RED);
+        }
     }
 
     private void setupConstraints(List<Room> rooms, ConstraintManager cm) {
