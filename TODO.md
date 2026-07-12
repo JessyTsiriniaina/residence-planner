@@ -5,5 +5,11 @@
 - [x] When a room is deleted, delete all constraint containing this room too (same thing with modification)
 - [ ] when changing panel already shown, doube click in list element should make details appear in the changing panel
 - [ ] fix size changing bug in the room management panel
-- [ ] Remove RoomRelationship class
+- [x] Remove RoomRelationship class
 - [ ] Make house coordinates optionnal
+- [x] Modernize constraints representation (direct use of Constraint class)
+- [x] Multi-house on terrain support (Land houses list)
+- [x] Unified Openings system (Opening base class + Door, Window, MainEntrance subtypes with width & offset)
+- [x] Advanced interactive Openings UI panel (dynamic form customization)
+- [x] Hybrid layout PlanGenerator pipeline (Shelf-packing, optimization, accessibility healing, smart openings)
+- [x] Robust actionable validation reporting (Validator with 8 distinct checks)

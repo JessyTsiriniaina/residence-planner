@@ -333,9 +333,21 @@ public class MainFrame extends JFrame {
     }
 
     private void generatePlan() {
-        double scale = Double.parseDouble(scaleField.getText());
-        double landWidth = Double.parseDouble((landWidthField.getText()));
-        double landHeight = Double.parseDouble((landHeightField.getText()));
+        double scale;
+        double landWidth;
+        double landHeight;
+        try {
+            scale = Double.parseDouble(scaleField.getText());
+            landWidth = Double.parseDouble(landWidthField.getText());
+            landHeight = Double.parseDouble(landHeightField.getText());
+            if (scale <= 0 || landWidth <= 0 || landHeight <= 0) {
+                JOptionPane.showMessageDialog(this, "L'échelle et les dimensions du terrain doivent être positives.");
+                return;
+            }
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Veuillez entrer des valeurs numériques valides pour l'échelle et les dimensions du terrain.");
+            return;
+        }
 
         scaleConverter.setPixelsPerMeter((int) scale);
 
