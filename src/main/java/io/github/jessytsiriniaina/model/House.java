@@ -65,4 +65,9 @@ public class House {
     public void clearRooms() {
         rooms.clear();
     }
+
+    @Override
+    public String toString() {
+        return name + " (" + String.format("%.1f", x) + "," + String.format("%.1f", y) + ") " + String.format("%.1f", width) + "x" + String.format("%.1f", height) + "m";
+    }
 }

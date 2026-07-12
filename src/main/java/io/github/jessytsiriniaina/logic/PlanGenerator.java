@@ -7,13 +7,14 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Refactored PlanGenerator implementing a Hybrid Pipeline:
- * 1. Area-based sorting (largest first)
- * 2. Shelf-packing placement with stochastic backtracking fallback
- * 3. Constraint optimization (NEXT_TO, ABOVE, BELOW, LEFT_OF, RIGHT_OF adjustment)
- * 4. Connectivity healing (pull isolated rooms close to other rooms)
- * 5. Opening placement (smart doors/windows on logical walls)
- * 6. Final validation
+ * Refactored PlanGenerator implementing a Hybrid Pipeline with Multi-house support:
+ * 1. Clear previous rooms from all houses
+ * 2. Sort rooms by area (largest first)
+ * 3. Distribute and place rooms inside available houses using Shelf-Packing with stochastic fallback
+ * 4. Constraint optimization for placed rooms
+ * 5. Connectivity healing per house
+ * 6. Opening placement (logical doors, external windows, and crimson MainEntrance)
+ * 7. Final validation reporting
  */
 public class PlanGenerator {
     public static final int MAX_PLACEMENT_ATTEMPTS = 1000;
@@ -23,28 +24,66 @@ public class PlanGenerator {
     private Random random = new Random();
 
     public void generate(Land land, List<Room> roomsToPlace, ConstraintManager constraintManager) {
-        House house = land.getHouse();
-        if (house == null) return;
-        house.clearRooms();
+        List<House> houses = land.getHouses();
+        if (houses.isEmpty()) return;
+
+        // Clear existing rooms in all houses
+        for (House house : houses) {
+            house.clearRooms();
+        }
 
         // --- STAGE 1: Sort rooms by area (largest first) ---
         roomsToPlace.sort((r1, r2) -> Double.compare(r2.getWidth() * r2.getHeight(), r1.getWidth() * r1.getHeight()));
 
-        // --- STAGE 2: Initial placement using Shelf-Packing with stochastic fallback ---
+        // --- STAGE 2: Distribute and place rooms inside houses ---
+        for (Room room : roomsToPlace) {
+            boolean placed = false;
+            for (House house : houses) {
+                placed = attemptPlacementInHouse(house, room, constraintManager);
+                if (placed) {
+                    house.addRoom(room);
+                    break;
+                }
+            }
+            if (!placed) {
+                // If it can't fit any house, force place in the first house as fallback
+                houses.get(0).addRoom(room);
+            }
+        }
+
+        // --- POST-PLACEMENT PROCESSING per house ---
+        for (House house : houses) {
+            // --- STAGE 3: Constraint Optimization ---
+            optimizeConstraints(house, constraintManager);
+
+            // --- STAGE 4: Basic Connectivity ---
+            healConnectivity(house);
+
+            // --- STAGE 5: Place Openings ---
+            assignSmartOpenings(house);
+
+            // --- STAGE 6: Final Validation ---
+            runFinalValidation(house, constraintManager);
+        }
+    }
+
+    private boolean attemptPlacementInHouse(House house, Room room, ConstraintManager constraintManager) {
+        // Shelf-packing first try
         double currentX = house.getX();
         double currentY = house.getY();
         double currentShelfHeight = 0.0;
 
-        for (Room room : roomsToPlace) {
-            // Check horizontal space inside house boundary
-            if (currentX + room.getWidth() > house.getX() + house.getWidth()) {
-                // Wrap to next shelf
+        for (Room existing : house.getRooms()) {
+            if (currentX + existing.getWidth() > house.getX() + house.getWidth()) {
                 currentX = house.getX();
                 currentY += currentShelfHeight;
                 currentShelfHeight = 0.0;
             }
+            currentX += existing.getWidth();
+            currentShelfHeight = Math.max(currentShelfHeight, existing.getHeight());
+        }
 
-            // Grid alignment
+        if (currentX + room.getWidth() <= house.getX() + house.getWidth()) {
             double x = Math.floor(currentX * GRID_ALIGNMENT) / GRID_ALIGNMENT;
             double y = Math.floor(currentY * GRID_ALIGNMENT) / GRID_ALIGNMENT;
 
@@ -52,32 +91,15 @@ public class PlanGenerator {
             room.setY(y);
 
             if (isValidPosition(house, room)) {
-                house.addRoom(room);
-                currentX += room.getWidth();
-                currentShelfHeight = Math.max(currentShelfHeight, room.getHeight());
-            } else {
-                // Stochastic fallback placement if shelf packing fails
-                boolean placed = attemptPlacement(house, room, constraintManager);
-                if (placed) {
-                    house.addRoom(room);
-                }
+                return true;
             }
         }
 
-        // --- STAGE 3: Constraint Optimization ---
-        optimizeConstraints(house, constraintManager);
-
-        // --- STAGE 4: Basic Connectivity ---
-        healConnectivity(house);
-
-        // --- STAGE 5: Place Openings ---
-        assignSmartOpenings(house);
-
-        // --- STAGE 6: Final Validation ---
-        runFinalValidation(house, constraintManager);
+        // Stochastic fallback placement if shelf packing fails
+        return attemptPlacementStochastic(house, room, constraintManager);
     }
 
-    private boolean attemptPlacement(House house, Room room, ConstraintManager constraintManager) {
+    private boolean attemptPlacementStochastic(House house, Room room, ConstraintManager constraintManager) {
         List<Constraint> related = findRelationshipsForRoom(room, constraintManager);
 
         if (!related.isEmpty()) {
@@ -253,7 +275,6 @@ public class PlanGenerator {
             room.clearOpenings();
 
             // 1. Assign Door
-            // Prefer SOUTH or EAST internal walls
             Position doorWall = Position.SOUTH;
             double doorOffset = room.getWidth() / 2.0;
             double doorWidth = 0.9;
@@ -264,7 +285,6 @@ public class PlanGenerator {
             }
 
             if (!mainEntrancePlaced && (room.getName().toLowerCase().contains("salon") || room == house.getRooms().get(0))) {
-                // This is the main entrance! Place it with customized labels
                 room.addOpening(new MainEntrance(doorWall, doorOffset, doorWidth, "Entrée Principale"));
                 mainEntrancePlaced = true;
             } else {
@@ -272,25 +292,21 @@ public class PlanGenerator {
             }
 
             // 2. Assign 1-2 Windows on outer/external boundary walls to prevent overlap
-            // North outer wall
             if (Math.abs(room.getY() - house.getY()) < 0.1) {
                 if (doorWall != Position.NORTH) {
                     room.addOpening(new Window(Position.NORTH, room.getWidth() / 2.0, 1.2));
                 }
             }
-            // West outer wall
             if (Math.abs(room.getX() - house.getX()) < 0.1) {
                 if (doorWall != Position.WEST) {
                     room.addOpening(new Window(Position.WEST, room.getHeight() / 2.0, 1.2));
                 }
             }
-            // East outer wall
             if (Math.abs(room.getX() + room.getWidth() - (house.getX() + house.getWidth())) < 0.1) {
                 if (doorWall != Position.EAST) {
                     room.addOpening(new Window(Position.EAST, room.getHeight() / 2.0, 1.2));
                 }
             }
-            // South outer wall
             if (Math.abs(room.getY() + room.getHeight() - (house.getY() + house.getHeight())) < 0.1) {
                 if (doorWall != Position.SOUTH) {
                     room.addOpening(new Window(Position.SOUTH, room.getWidth() / 2.0, 1.2));

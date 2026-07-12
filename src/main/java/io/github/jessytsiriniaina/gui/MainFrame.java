@@ -6,7 +6,6 @@ import io.github.jessytsiriniaina.logic.ScaleConverter;
 import io.github.jessytsiriniaina.logic.Validator;
 import io.github.jessytsiriniaina.model.*;
 
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -69,7 +68,9 @@ public class MainFrame extends JFrame {
     private DefaultListModel<Room> roomListModel = new DefaultListModel<>();
     private DefaultListModel<io.github.jessytsiriniaina.model.Constraint> constraintListModel = new DefaultListModel<>();
 
-
+    // Programmatic Multi-house UI Components
+    private DefaultListModel<House> houseListModel = new DefaultListModel<>();
+    private JList<House> houseListUI;
 
     private void createUIComponents() {
         drawingPanel = new DrawingPanel(new Land(), new ScaleConverter());
@@ -92,6 +93,11 @@ public class MainFrame extends JFrame {
         houseHeightField.setText("30");
         houseXField.setText("10");
         houseYField.setText("10");
+
+        // Set up initial default house
+        House defaultHouse = new House(10.0, 10.0, 30.0, 30.0);
+        defaultHouse.setName("Maison 1");
+        houseListModel.addElement(defaultHouse);
 
         addRoomButton.addActionListener(new ActionListener() {
             @Override
@@ -136,7 +142,6 @@ public class MainFrame extends JFrame {
         constraintList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                //super.mouseClicked(e);
                 if (e.getClickCount() == 2) {
                     int index = constraintList.locationToIndex(e.getPoint());
                     if (index != -1) {
@@ -148,7 +153,6 @@ public class MainFrame extends JFrame {
         roomList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                //super.mouseClicked(e);
                 if (e.getClickCount() == 2) {
                     int index = roomList.locationToIndex(e.getPoint());
                     if (index != -1) {
@@ -191,6 +195,96 @@ public class MainFrame extends JFrame {
         roomListModel.addElement(new Room("Chambre 1", 12, 12));
         roomListModel.addElement(new Room("Salon", 12, 12));
         roomListModel.addElement(new Room("Cuisine", 12, 12));
+
+        // Reorganize housePanel programmatically to support multiple houses
+        buildMultiHousePanel();
+    }
+
+    private void buildMultiHousePanel() {
+        housePanel.setLayout(new BorderLayout());
+
+        JPanel container = new JPanel();
+        container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
+        container.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        // Dimension inputs row
+        JPanel inputsPanel = new JPanel(new GridLayout(2, 4, 4, 4));
+        inputsPanel.add(new JLabel("L (m):"));
+        inputsPanel.add(houseWidthField);
+        inputsPanel.add(new JLabel("x (m):"));
+        inputsPanel.add(houseXField);
+
+        inputsPanel.add(new JLabel("H (m):"));
+        inputsPanel.add(houseHeightField);
+        inputsPanel.add(new JLabel("y (m):"));
+        inputsPanel.add(houseYField);
+
+        container.add(inputsPanel);
+
+        // Control Buttons
+        JPanel actionButtonsPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JButton addHouseButton = new JButton("Ajouter Maison");
+        JButton removeHouseButton = new JButton("Supprimer Maison");
+        actionButtonsPanel.add(addHouseButton);
+        actionButtonsPanel.add(removeHouseButton);
+        container.add(actionButtonsPanel);
+
+        // Houses List
+        houseListUI = new JList<>(houseListModel);
+        JScrollPane scrollPane = new JScrollPane(houseListUI);
+        scrollPane.setPreferredSize(new Dimension(180, 80));
+        container.add(scrollPane);
+
+        housePanel.removeAll();
+        housePanel.add(container, BorderLayout.CENTER);
+
+        // Add Listeners
+        addHouseButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    double w = Double.parseDouble(houseWidthField.getText());
+                    double h = Double.parseDouble(houseHeightField.getText());
+                    double x = Double.parseDouble(houseXField.getText());
+                    double y = Double.parseDouble(houseYField.getText());
+
+                    House newHouse = new House(x, y, w, h);
+                    newHouse.setName("Maison " + (houseListModel.size() + 1));
+                    houseListModel.addElement(newHouse);
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(MainFrame.this, "Veuillez entrer des valeurs numériques valides.");
+                }
+            }
+        });
+
+        removeHouseButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int selected = houseListUI.getSelectedIndex();
+                if (selected != -1) {
+                    if (houseListModel.size() > 1) {
+                        houseListModel.remove(selected);
+                    } else {
+                        JOptionPane.showMessageDialog(MainFrame.this, "Il doit y avoir au moins une maison.");
+                    }
+                }
+            }
+        });
+
+        houseListUI.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    House h = houseListUI.getSelectedValue();
+                    if (h != null) {
+                        houseWidthField.setText(String.valueOf(h.getWidth()));
+                        houseHeightField.setText(String.valueOf(h.getHeight()));
+                        houseXField.setText(String.valueOf(h.getX()));
+                        houseYField.setText(String.valueOf(h.getY()));
+                    }
+                }
+            }
+        });
     }
 
     public void hideChangingPanel() {
@@ -242,17 +336,18 @@ public class MainFrame extends JFrame {
         double scale = Double.parseDouble(scaleField.getText());
         double landWidth = Double.parseDouble((landWidthField.getText()));
         double landHeight = Double.parseDouble((landHeightField.getText()));
-        double houseWidth = Double.parseDouble(houseWidthField.getText());
-        double houseHeight = Double.parseDouble(houseHeightField.getText());
-        double houseX = Double.parseDouble(houseXField.getText());
-        double houseY = Double.parseDouble(houseYField.getText());
 
         scaleConverter.setPixelsPerMeter((int) scale);
 
         land.setWidth(landWidth);
         land.setHeight(landHeight);
-        House house = new House(houseX, houseY, houseWidth, houseHeight);
-        land.setHouse(house);
+
+        // Retrieve and populate all houses into Land
+        List<House> houses = new ArrayList<>();
+        for (int i = 0; i < houseListModel.size(); i++) {
+            houses.add(houseListModel.get(i));
+        }
+        land.setHouses(houses);
 
         drawingPanel.setLand(land);
         drawingPanel.setScaleConverter(scaleConverter);
@@ -307,11 +402,16 @@ public class MainFrame extends JFrame {
     }
 
     private void reset() {
-        land.setHouse(null);
+        land.setHouses(new ArrayList<>());
+        houseListModel.clear();
+        House defaultHouse = new House(10.0, 10.0, 30.0, 30.0);
+        defaultHouse.setName("Maison 1");
+        houseListModel.addElement(defaultHouse);
+
         constraintListModel.clear();
         roomListModel.clear();
         constraintManager.clear();
-        //bottomPanel.clear();
         drawingPanel.repaint();
+        reportArea.setText("");
     }
 }
