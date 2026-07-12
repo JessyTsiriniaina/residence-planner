@@ -1,6 +1,6 @@
 package io.github.jessytsiriniaina.model;
 
-public class MainEntrance extends Opening {
+public class MainEntrance extends Door {
 
     public MainEntrance(Position position) {
         super(position);
@@ -16,6 +16,6 @@ public class MainEntrance extends Opening {
 
     @Override
     public String toString() {
-        return "MainEntrance " + getPosition() + (getLabel().isEmpty() ? "" : " (" + getLabel() + ")");
+        return "Entrée Principale " + getPosition() + " (" + getOffset() + "m, " + getWidth() + "m)" + (getLabel().isEmpty() ? "" : " - " + getLabel());
     }
 }

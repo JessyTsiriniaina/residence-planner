@@ -42,6 +42,47 @@ public class Validator {
             }
         }
 
+        // Openings boundaries and collisions validation
+        for (Room room : rooms) {
+            for (Position pos : Position.values()) {
+                if (pos == Position.NONE) continue;
+                List<Opening> wallOpenings = new ArrayList<>();
+                for (Opening op : room.getOpenings()) {
+                    if (op.getPosition() == pos) {
+                        wallOpenings.add(op);
+                    }
+                }
+
+                // Sort by offset to easily check adjacent overlaps
+                wallOpenings.sort((o1, o2) -> Double.compare(o1.getOffset(), o2.getOffset()));
+
+                // 1. Check boundary limits
+                double wallLength = (pos == Position.NORTH || pos == Position.SOUTH) ? room.getWidth() : room.getHeight();
+                for (Opening op : wallOpenings) {
+                    if (op.getOffset() > 0) {
+                        double start = op.getOffset() - op.getWidth() / 2.0;
+                        double end = op.getOffset() + op.getWidth() / 2.0;
+                        if (start < 0 || end > wallLength) {
+                            errors.add("L'ouverture " + op + " de " + room.getName() + " dépasse les limites du mur (" + pos + ").");
+                        }
+                    }
+                }
+
+                // 2. Check overlap collision on the same wall
+                for (int k = 0; k < wallOpenings.size() - 1; k++) {
+                    Opening current = wallOpenings.get(k);
+                    Opening next = wallOpenings.get(k + 1);
+                    if (current.getOffset() > 0 && next.getOffset() > 0) {
+                        double currentEnd = current.getOffset() + current.getWidth() / 2.0;
+                        double nextStart = next.getOffset() - next.getWidth() / 2.0;
+                        if (currentEnd > nextStart) {
+                            errors.add("Collision d'ouvertures détectée sur le mur " + pos + " de " + room.getName() + ".");
+                        }
+                    }
+                }
+            }
+        }
+
         return errors;
     }
 

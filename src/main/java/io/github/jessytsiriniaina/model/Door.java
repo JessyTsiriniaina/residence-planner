@@ -10,8 +10,12 @@ public class Door extends Opening {
         super(position, offset, width);
     }
 
+    public Door(Position position, double offset, double width, String label) {
+        super(position, offset, width, label);
+    }
+
     @Override
     public String toString() {
-        return "Door " + getPosition();
+        return "Porte " + getPosition() + " (" + getOffset() + "m, " + getWidth() + "m)" + (getLabel().isEmpty() ? "" : " - " + getLabel());
     }
 }

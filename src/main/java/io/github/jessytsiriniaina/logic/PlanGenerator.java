@@ -248,23 +248,52 @@ public class PlanGenerator {
     }
 
     private void assignSmartOpenings(House house) {
+        boolean mainEntrancePlaced = false;
         for (Room room : house.getRooms()) {
-            if (room.getDoors().isEmpty()) {
-                Position logicalWall = Position.SOUTH;
-                if (Math.abs(room.getY() + room.getHeight() - (house.getY() + house.getHeight())) < 0.1) {
-                    logicalWall = Position.NORTH;
-                }
-                room.addDoor(new Door(logicalWall));
-            }
-            if (room.getWindows().isEmpty()) {
-                Position outerWall = Position.NONE;
-                if (Math.abs(room.getX() - house.getX()) < 0.1) outerWall = Position.WEST;
-                else if (Math.abs(room.getX() + room.getWidth() - (house.getX() + house.getWidth())) < 0.1) outerWall = Position.EAST;
-                else if (Math.abs(room.getY() - house.getY()) < 0.1) outerWall = Position.NORTH;
-                else if (Math.abs(room.getY() + room.getHeight() - (house.getY() + house.getHeight())) < 0.1) outerWall = Position.SOUTH;
+            room.clearOpenings();
 
-                if (outerWall != Position.NONE) {
-                    room.addWindow(new Window(outerWall));
+            // 1. Assign Door
+            // Prefer SOUTH or EAST internal walls
+            Position doorWall = Position.SOUTH;
+            double doorOffset = room.getWidth() / 2.0;
+            double doorWidth = 0.9;
+
+            if (Math.abs(room.getY() + room.getHeight() - (house.getY() + house.getHeight())) < 0.1) {
+                doorWall = Position.NORTH;
+                doorOffset = room.getWidth() / 2.0;
+            }
+
+            if (!mainEntrancePlaced && (room.getName().toLowerCase().contains("salon") || room == house.getRooms().get(0))) {
+                // This is the main entrance! Place it with customized labels
+                room.addOpening(new MainEntrance(doorWall, doorOffset, doorWidth, "Entrée Principale"));
+                mainEntrancePlaced = true;
+            } else {
+                room.addOpening(new Door(doorWall, doorOffset, doorWidth));
+            }
+
+            // 2. Assign 1-2 Windows on outer/external boundary walls to prevent overlap
+            // North outer wall
+            if (Math.abs(room.getY() - house.getY()) < 0.1) {
+                if (doorWall != Position.NORTH) {
+                    room.addOpening(new Window(Position.NORTH, room.getWidth() / 2.0, 1.2));
+                }
+            }
+            // West outer wall
+            if (Math.abs(room.getX() - house.getX()) < 0.1) {
+                if (doorWall != Position.WEST) {
+                    room.addOpening(new Window(Position.WEST, room.getHeight() / 2.0, 1.2));
+                }
+            }
+            // East outer wall
+            if (Math.abs(room.getX() + room.getWidth() - (house.getX() + house.getWidth())) < 0.1) {
+                if (doorWall != Position.EAST) {
+                    room.addOpening(new Window(Position.EAST, room.getHeight() / 2.0, 1.2));
+                }
+            }
+            // South outer wall
+            if (Math.abs(room.getY() + room.getHeight() - (house.getY() + house.getHeight())) < 0.1) {
+                if (doorWall != Position.SOUTH) {
+                    room.addOpening(new Window(Position.SOUTH, room.getWidth() / 2.0, 1.2));
                 }
             }
         }
