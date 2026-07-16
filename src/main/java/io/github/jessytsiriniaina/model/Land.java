@@ -6,7 +6,8 @@ import java.util.List;
 public class Land {
     private double width;
     private double height;
-    private House house;
+    private List<House> houses = new ArrayList<>();
+
 
     public Land(double width, double height) {
         this.width = width;
@@ -26,10 +27,16 @@ public class Land {
     }
 
     public void setHeight(double height) {
+        if (height <= 0) {
+            throw new IllegalArgumentException("La largeur doit être positive.");
+        }
         this.height = height;
     }
 
     public void setWidth(double width) {
+        if (width <= 0) {
+            throw new IllegalArgumentException("Le longueur doit être positif.");
+        }
         this.width = width;
     }
 
@@ -37,10 +44,21 @@ public class Land {
         return width * height;
     }
 
-    public House getHouse() {
-        return house;
+    public List<House> getHouses() {
+        return houses;
     }
 
-    public void setHouse(House house) {this.house = house;}
+    public void setHouses(List<House> houses) {
+        this.houses = houses != null ? houses : new ArrayList<>();
+    }
 
+    public void addHouse(House house) {
+        if (house != null) {
+            houses.add(house);
+        }
+    }
+
+    public void clearHouses() {
+        houses.clear();
+    }
 }
