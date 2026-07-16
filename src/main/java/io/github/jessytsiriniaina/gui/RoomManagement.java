@@ -26,8 +26,11 @@ public class RoomManagement {
     private JComboBox positionBox;
     private JButton cancelOpeningConfigurationButton;
     private JButton OKOpeningConfigurationButton;
+    private JTextField openingWidthField;
+    private JTextField offsetField;
     private final MainFrame parent;
     private Room existingRoom;
+    private House house;
 
     private DefaultListModel<Door> doorListModel = new DefaultListModel<>();
     private DefaultListModel<Window> windowListModel = new DefaultListModel<>();
@@ -70,8 +73,15 @@ public class RoomManagement {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 String name = roomName.getText();
-                double width = Double.parseDouble(roomWidth.getText());
-                double height = Double.parseDouble(roomHeight.getText());
+                double width = 0;
+                double height = 0;
+
+                try {
+                    width = Double.parseDouble(roomWidth.getText());
+                    height = Double.parseDouble(roomHeight.getText());
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(parent, "Veuillez entrer des valeurs numériques valides pour la longueur et la largeur");
+                }
 
                 Room newRoom = new Room(name, width, height);
 
@@ -88,7 +98,8 @@ public class RoomManagement {
                         JOptionPane.showMessageDialog(parent, "Une pièce portant ce nom existe déjà.");
                         return;
                     }
-                    parent.addRoom(newRoom);
+
+                    parent.addRoom(house, newRoom);
                 } else {
                     if (roomAlreadyExists(newRoom, existingRoom)) {
                         JOptionPane.showMessageDialog(parent, "Une pièce portant ce nom existe déjà.");
@@ -102,6 +113,7 @@ public class RoomManagement {
 
                 emptyInputsFields();
                 JOptionPane.showMessageDialog(parent, "Piece " + name + "(" + width + "m x " + height + "m)" +" cree avec succes");
+                existingRoom = null;
             }
         });
         roomManagementPanel.addComponentListener(new ComponentAdapter() {
@@ -125,14 +137,14 @@ public class RoomManagement {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 int selected = doorList.getSelectedIndex();
-                if(selected != 1) doorListModel.remove(selected);
+                if(selected != -1) doorListModel.remove(selected);
             }
         });
         deleteWindowButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 int selected = windowList.getSelectedIndex();
-                if(selected != 1) windowListModel.remove(selected);
+                if(selected != -1) windowListModel.remove(selected);
             }
         });
         openingConfigurationPanel.addComponentListener(new ComponentAdapter() {
@@ -149,6 +161,23 @@ public class RoomManagement {
                 if(positionBox.getSelectedItem().equals(Position.NONE)) {
                     return;
                 }
+
+                try {
+                    double offset = Double.parseDouble(offsetField.getText());
+                    double width = Double.parseDouble(openingWidthField.getText());
+                    if (width <= 0) {
+                        JOptionPane.showMessageDialog(parent, "La largeur de l'ouverture doit être positive.");
+                        return;
+                    }
+                    if (offset < 0) {
+                        JOptionPane.showMessageDialog(parent, "L'offset ne peut pas être négatif.");
+                        return;
+                    }
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(parent, "Veuillez entrer des valeurs numériques valides pour l'offset et la largeur.");
+                    return;
+                }
+
                 if(isAddingDoor) {
                     Door newDoor = new Door((Position) positionBox.getSelectedItem());
                     doorListModel.addElement(newDoor);
@@ -158,6 +187,9 @@ public class RoomManagement {
                 }
 
                 positionBox.setSelectedIndex(0);
+                openingWidthField.setText("");
+                offsetField.setText("");
+                openingConfigurationPanel.setVisible(false);
 
             }
         });
@@ -179,6 +211,8 @@ public class RoomManagement {
         roomHeight.setText("");
         doorListModel.clear();
         windowListModel.clear();
+        openingWidthField.setText("");
+        offsetField.setText("");
         positionBox.setSelectedIndex(0);
         isAddingDoor = false;
     }
@@ -224,5 +258,9 @@ public class RoomManagement {
         for (int i = 0; i < Position.values().length; i++) {
             positionBox.addItem(Position.values()[i]);
         }
+    }
+
+    public void setHouse(House house) {
+        this.house = house;
     }
 }

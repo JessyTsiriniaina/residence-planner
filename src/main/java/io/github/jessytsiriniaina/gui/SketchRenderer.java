@@ -2,7 +2,6 @@ package io.github.jessytsiriniaina.gui;
 
 import io.github.jessytsiriniaina.logic.ScaleConverter;
 import io.github.jessytsiriniaina.model.*;
-import io.github.jessytsiriniaina.model.Window;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -15,8 +14,6 @@ public class SketchRenderer {
         int tw = sc.toPixels(land.getWidth());
         int th = sc.toPixels(land.getHeight());
 
-        House house = land.getHouse();
-
         // Draw Terrain Boundary
         g.setColor(new Color(240, 255, 240));
         g.fillRect(0, 0, tw, th);
@@ -26,32 +23,29 @@ public class SketchRenderer {
         g.setFont(new Font("Arial", Font.PLAIN , 11));
         g.drawString(String.format("Terrain: %.1f m x %.1f m", land.getWidth(), land.getHeight()), 5, th - 5);
 
-        // House position relative to terrain (simple centering or at 0,0)
-        // For now, let's assume house is placed at (0,0) inside the drawing context provided by DrawingPanel
-        // which already centered the terrain.
+        // Render all houses on the land
+        for (House house : land.getHouses()) {
+            if (house != null) {
+                int w = sc.toPixels(house.getWidth());
+                int h = sc.toPixels(house.getHeight());
+                int x = sc.toPixels(house.getX());
+                int y = sc.toPixels(house.getY());
 
-        if(!(house == null)) {
-            int w = sc.toPixels(house.getWidth());
-            int h = sc.toPixels(house.getHeight());
-            int x = sc.toPixels(house.getX());
-            int y = sc.toPixels(house.getY());
+                // Draw House Boundary
+                g.setColor(Color.BLACK);
+                g.setStroke(new BasicStroke(2));
+                g.drawRect(x, y, w, h);
 
-            // Draw House Boundary
-            g.setColor(Color.BLACK);
-            g.setStroke(new BasicStroke(2));
-            g.drawRect(x, y, w, h);
+                // Draw House Dimensions
+                g.setFont(new Font("Arial", Font.PLAIN, 11));
+                g.drawString(String.format("%s: %.1f m x %.1f m (%.1f m²)", house.getName(), house.getWidth(), house.getHeight(), house.getWidth() * house.getHeight()), sc.toPixels(house.getX() + 1), sc.toPixels((house.getHeight() + house.getY() + 2)));
 
-            // Draw House Dimensions
-            g.setFont(new Font("Arial", Font.PLAIN, 11));
-            g.drawString(String.format("%.1f m x %.1f m (%.1f m²)", house.getWidth(), house.getHeight(), house.getWidth() * house.getHeight()), sc.toPixels(house.getX() + 1), sc.toPixels((house.getHeight() + house.getY() + 2)));
-
-            // Draw Rooms
-
-            for (Room room : house.getRooms()) {
-                drawRoom(g, room, sc);
+                // Draw Rooms
+                for (Room room : house.getRooms()) {
+                    drawRoom(g, room, sc);
+                }
             }
         }
-
     }
 
     private void drawRoom(Graphics2D g, Room room, ScaleConverter sc) {
@@ -82,29 +76,32 @@ public class SketchRenderer {
         g.drawString(dims, x + (w - fm.stringWidth(dims)) / 2, y + h / 2 + 10);
 
         // Draw doors
-        drawOpenings(g, x, y, w, h, room.getDoors(), true);
+        drawOpenings(g, x, y, w, h, room.getDoors(), true, sc);
 
         // Draw windows
-        drawOpenings(g, x, y, w, h, room.getWindows(), false);
+        drawOpenings(g, x, y, w, h, room.getWindows(), false, sc);
     }
 
-    private void drawOpenings(Graphics2D g, int x, int y, int w, int h, List<?> openings, boolean isDoor) {
-        Map<Object, List<Object>> byPos = new HashMap<>();
-        for (Object o : openings) {
-            Object pos = isDoor ? ((Door)o).getPosition() : ((Window)o).getPosition();
-            byPos.computeIfAbsent(pos, k -> new ArrayList<>()).add(o);
+    private void drawOpenings(Graphics2D g, int x, int y, int w, int h, List<? extends Opening> openings, boolean isDoor, ScaleConverter sc) {
+        Map<Position, List<Opening>> byPos = new HashMap<>();
+        for (Opening op : openings) {
+            byPos.computeIfAbsent(op.getPosition(), k -> new ArrayList<>()).add(op);
         }
 
-        for (Map.Entry<Object, List<Object>> entry : byPos.entrySet()) {
-            Object pos = entry.getKey();
-            List<Object> list = entry.getValue();
+        for (Map.Entry<Position, List<Opening>> entry : byPos.entrySet()) {
+            Position pos = entry.getKey();
+            List<Opening> list = entry.getValue();
             int count = list.size();
-            int size = isDoor ? 25 : 35;
 
             for (int i = 0; i < count; i++) {
-                double offsetFrac = (i + 1.0) / (count + 1.0);
+                Opening op = list.get(i);
+                int size = isDoor ?  25 : 35;
+                if (op.getWidth() > 0 && op.getWidth() != 1.0) {
+                    size = sc.toPixels(op.getWidth());
+                }
+
                 if (isDoor) {
-                    g.setColor(new Color(139, 69, 19));
+                    g.setColor(new Color(139, 69, 19)); // Saddle Brown
                     g.setStroke(new BasicStroke(4));
                 } else {
                     g.setColor(new Color(100, 200, 255));
@@ -112,20 +109,40 @@ public class SketchRenderer {
                 }
 
                 int cx, cy;
-                if (pos == Position.NORTH || pos == Position.NORTH) {
-                    cx = x + (int)(w * offsetFrac);
+                if (pos == Position.NORTH) {
+                    if (op.getOffset() > 0) {
+                        cx = x + sc.toPixels(op.getOffset());
+                    } else {
+                        double offsetFrac = (i + 1.0) / (count + 1.0);
+                        cx = x + (int)(w * offsetFrac);
+                    }
                     g.drawLine(cx - size/2, y, cx + size/2, y);
                     if (isDoor) drawDoorSwing(g, cx, y, size, -1);
-                } else if (pos == Position.SOUTH || pos == Position.SOUTH) {
-                    cx = x + (int)(w * offsetFrac);
+                } else if (pos == Position.SOUTH) {
+                    if (op.getOffset() > 0) {
+                        cx = x + sc.toPixels(op.getOffset());
+                    } else {
+                        double offsetFrac = (i + 1.0) / (count + 1.0);
+                        cx = x + (int)(w * offsetFrac);
+                    }
                     g.drawLine(cx - size/2, y + h, cx + size/2, y + h);
                     if (isDoor) drawDoorSwing(g, cx, y + h, size, 1);
-                } else if (pos == Position.EAST || pos == Position.EAST) {
-                    cy = y + (int)(h * offsetFrac);
+                } else if (pos == Position.EAST) {
+                    if (op.getOffset() > 0) {
+                        cy = y + sc.toPixels(op.getOffset());
+                    } else {
+                        double offsetFrac = (i + 1.0) / (count + 1.0);
+                        cy = y + (int)(h * offsetFrac);
+                    }
                     g.drawLine(x + w, cy - size/2, x + w, cy + size/2);
                     if (isDoor) drawDoorSwing(g, x + w, cy, size, 2);
-                } else if (pos == Position.WEST || pos == Position.WEST) {
-                    cy = y + (int)(h * offsetFrac);
+                } else if (pos == Position.WEST) {
+                    if (op.getOffset() > 0) {
+                        cy = y + sc.toPixels(op.getOffset());
+                    } else {
+                        double offsetFrac = (i + 1.0) / (count + 1.0);
+                        cy = y + (int)(h * offsetFrac);
+                    }
                     g.drawLine(x, cy - size/2, x, cy + size/2);
                     if (isDoor) drawDoorSwing(g, x, cy, size, 3);
                 }

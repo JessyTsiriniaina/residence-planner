@@ -5,5 +5,5 @@
 - [x] When a room is deleted, delete all constraint containing this room too (same thing with modification)
 - [ ] when changing panel already shown, doube click in list element should make details appear in the changing panel
 - [ ] fix size changing bug in the room management panel
-- [ ] Remove RoomRelationship class
+- [x] Remove RoomRelationship class
 - [ ] Make house coordinates optionnal

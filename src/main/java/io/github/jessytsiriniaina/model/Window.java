@@ -1,18 +1,20 @@
 package io.github.jessytsiriniaina.model;
 
-public class Window {
-    private Position position;
-
+public class Window extends Opening{
     public Window(Position position) {
-        this.position = position;
+        super(position);
     }
 
-    public Position getPosition() {
-        return position;
+    public Window(Position position, double offset, double width) {
+        super(position, offset, width);
+    }
+
+    public Window(Position position, double offset, double width, String label) {
+        super(position, offset, width, label);
     }
 
     @Override
     public String toString() {
-        return "Window " + position;
+        return "Fenêtre " + getPosition() + " (" + getOffset() + "m, " + getWidth() + "m)" + (getLabel().isEmpty() ? "" : " - " + getLabel());
     }
 }

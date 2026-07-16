@@ -2,6 +2,7 @@ package io.github.jessytsiriniaina.gui;
 
 import io.github.jessytsiriniaina.model.ConstraintType;
 import io.github.jessytsiriniaina.model.Room;
+import io.github.jessytsiriniaina.model.Constraint;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -10,7 +11,7 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.Objects;
 
-public class Constraint {
+public class ConstraintManagement {
     private JComboBox firstRoom;
     private JPanel constraintPanel;
     private JComboBox constraintBox;
@@ -18,9 +19,9 @@ public class Constraint {
     private JButton cancelButton;
     private JButton OKButton;
     private final MainFrame parent;
-    private io.github.jessytsiriniaina.model.Constraint existingConstraint;
+    private Constraint existingConstraint;
 
-    public Constraint(MainFrame parent) {
+    public ConstraintManagement(MainFrame parent) {
         this.parent = parent;
         fillConstraintType();
         cancelButton.addActionListener(new ActionListener() {
@@ -40,6 +41,7 @@ public class Constraint {
                 }
             }
         });
+
         OKButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -58,7 +60,7 @@ public class Constraint {
 
                 ConstraintType type = ((ConstraintTypeWrapper) constraintBox.getSelectedItem()).getType();
 
-                io.github.jessytsiriniaina.model.Constraint newConstraint = new io.github.jessytsiriniaina.model.Constraint(room1, room2, type);
+                Constraint newConstraint = new Constraint(room1, room2, type);
 
                 if (existingConstraint == null) {
                     if (constraintAlreadyExists(newConstraint, null)) {
@@ -107,7 +109,7 @@ public class Constraint {
         }
     }
 
-    public void setExistingConstraint(io.github.jessytsiriniaina.model.Constraint existingConstraint) {
+    public void setExistingConstraint(Constraint existingConstraint) {
         this.existingConstraint = existingConstraint;
     }
 
@@ -119,14 +121,13 @@ public class Constraint {
     }
 
     private boolean constraintAlreadyExists(
-            io.github.jessytsiriniaina.model.Constraint constraint,
-            io.github.jessytsiriniaina.model.Constraint constraintToIgnore) {
+            Constraint constraint,
+            Constraint constraintToIgnore) {
 
-        DefaultListModel<io.github.jessytsiriniaina.model.Constraint> constraintList =
-                parent.getConstraintListModel();
+        DefaultListModel<Constraint> constraintList = parent.getConstraintListModel();
 
         for (int i = 0; i < constraintList.getSize(); i++) {
-            io.github.jessytsiriniaina.model.Constraint actualConstraint = constraintList.get(i);
+            Constraint actualConstraint = constraintList.get(i);
 
             if (actualConstraint == constraintToIgnore) {
                 continue;
