@@ -146,6 +146,14 @@ public class Validator {
         List<House> houses = land.getHouses();
         if (houses.isEmpty()) return errors;
 
+        for (int i = 0; i < houses.size(); i++) {
+            for (int j = i + 1; j < houses.size(); j++) {
+                if (houses.get(i).overlaps(houses.get(j))) {
+                    errors.add("Chevauchement détecté entre la maison '" + houses.get(i).getName() + "' et la maison '" + houses.get(j).getName() + "'.");
+                }
+            }
+        }
+
         // Run House and room-level validation
         for(House house: houses) {
             errors.addAll(validate(house, constraintManager));
@@ -184,9 +192,9 @@ public class Validator {
         switch (rel.getType()) {
             case NEXT_TO:
                 return isAdjacent(r1, r2, epsilon);
-            case OPPOSITE:
+            /*case OPPOSITE:
                 return (Math.abs(r1.getX() - r2.getX()) < epsilon && Math.abs(r1.getY() - r2.getY()) > Math.min(r1.getHeight(), r2.getHeight())) ||
-                        (Math.abs(r1.getY() - r2.getY()) < epsilon && Math.abs(r1.getX() - r2.getX()) > Math.min(r1.getWidth(), r2.getWidth()));
+                        (Math.abs(r1.getY() - r2.getY()) < epsilon && Math.abs(r1.getX() - r2.getX()) > Math.min(r1.getWidth(), r2.getWidth()));*/
             case ABOVE:
                 return r1.getY() + r1.getHeight() <= r2.getY() + epsilon;
             case BELOW:
@@ -195,8 +203,8 @@ public class Validator {
                 return r1.getX() + r1.getWidth() <= r2.getX() + epsilon;
             case RIGHT_OF:
                 return r1.getX() >= r2.getX() + r2.getWidth() - epsilon;
-            case NOT_ADJACENT_TO:
-                return !isAdjacent(r1, r2, epsilon);
+            /*case NOT_ADJACENT_TO:
+                return !isAdjacent(r1, r2, epsilon);*/
             default:
                 return false;
         }
@@ -217,12 +225,12 @@ public class Validator {
     private String getFriendlyConstraintTypeName(ConstraintType type) {
         switch (type) {
             case NEXT_TO: return "à côté de";
-            case OPPOSITE: return "en face de";
+            /*case OPPOSITE: return "en face de";*/
             case ABOVE: return "au-dessus de";
             case BELOW: return "en dessous de";
             case LEFT_OF: return "à gauche de";
             case RIGHT_OF: return "à droite de";
-            case NOT_ADJACENT_TO: return "non adjacente à";
+            /*case NOT_ADJACENT_TO: return "non adjacente à";*/
             default: return type.toString();
         }
     }

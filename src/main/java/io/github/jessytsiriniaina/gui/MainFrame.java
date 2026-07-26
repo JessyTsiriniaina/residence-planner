@@ -6,21 +6,17 @@ import io.github.jessytsiriniaina.logic.ScaleConverter;
 import io.github.jessytsiriniaina.logic.Validator;
 import io.github.jessytsiriniaina.model.*;
 
-
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
 public class MainFrame extends JFrame {
-    private Land land;
-    private ConstraintManager constraintManager;
-    private PlanGenerator generator;
-    private Validator validator;
-    private ScaleConverter scaleConverter;
-
     private JPanel mainPanel;
     private DrawingPanel drawingPanel;
     private JPanel propertiesPanel;
@@ -52,6 +48,7 @@ public class MainFrame extends JFrame {
     private JButton removeHouseButton;
     private JButton saveHouseButton;
     private JTextField houseNameField;
+    private JPanel houseListPanel;
     private CardLayout cardLayout;
 
     private final ConstraintManagement constraintMananagement = new ConstraintManagement(this);
@@ -73,17 +70,11 @@ public class MainFrame extends JFrame {
 
 
     private void createUIComponents() {
-        drawingPanel = new DrawingPanel(new Land(), new ScaleConverter());
+        drawingPanel = new DrawingPanel();
     }
 
     public MainFrame() {
         this.cardLayout = (CardLayout) changingPanel.getLayout();
-        scaleConverter =  new ScaleConverter();
-        constraintManager = new ConstraintManager();
-        generator = new PlanGenerator();
-        validator = new Validator();
-        land = new Land();
-
         setup();
 
         addRoomButton.addActionListener(new ActionListener() {
@@ -91,10 +82,11 @@ public class MainFrame extends JFrame {
             public void actionPerformed(ActionEvent actionEvent) {
                 //adapter pour le lier a une maison
                 House house = (House) houseList.getSelectedValue();
-                if(house == null) {
+                if (house == null) {
                     JOptionPane.showMessageDialog(MainFrame.this, "Veuillez choisir une maison pour ajouter une piece.");
                     return;
                 }
+                hideChangingPanel();
                 showRoomManagementPanel(house, null);
             }
         });
@@ -131,7 +123,7 @@ public class MainFrame extends JFrame {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 int selected = constraintList.getSelectedIndex();
-                if(selected != -1) constraintListModel.remove(selected);
+                if (selected != -1) constraintListModel.remove(selected);
             }
         });
 
@@ -141,6 +133,7 @@ public class MainFrame extends JFrame {
                 if (e.getClickCount() == 2) {
                     int index = constraintList.locationToIndex(e.getPoint());
                     if (index != -1) {
+                        hideChangingPanel();
                         showConstraintManagementPanel(constraintListModel.getElementAt(index));
                     }
                 }
@@ -153,6 +146,7 @@ public class MainFrame extends JFrame {
                 if (e.getClickCount() == 2) {
                     int index = roomList.locationToIndex(e.getPoint());
                     if (index != -1) {
+                        hideChangingPanel();
                         showRoomManagementPanel(null, roomListModel.getElementAt(index));
                     }
                 }
@@ -176,8 +170,9 @@ public class MainFrame extends JFrame {
         saveHouseButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                //triple clique sur la liste et un bug se produit, il faut le corriger
                 try {
-                    if(isEditingHouse) {
+                    if (isEditingHouse) {
                         House house = (House) houseList.getSelectedValue();
                         updateHouseFromInputs(house);
                         houseList.updateUI();
@@ -188,11 +183,12 @@ public class MainFrame extends JFrame {
                         houseListModel.addElement(newHouse);
                         showRoomListFor(newHouse);
                     }
-
-                    emptyHouseFields();
-                } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(MainFrame.this, "Veuillez entrer des valeurs numériques valides.");
+                } catch (NumberFormatException e) {
+                    JOptionPane.showMessageDialog(MainFrame.this, "Veuillez entrer des formats valides");
+                    return;
                 }
+
+                emptyHouseFields();
             }
         });
 
@@ -227,18 +223,6 @@ public class MainFrame extends JFrame {
         });
     }
 
-
-
-
-
-
-
-
-
-
-
-
-
     private void setup() {
         setContentPane(mainPanel);
         setTitle("Residence Planer");
@@ -257,6 +241,8 @@ public class MainFrame extends JFrame {
         constraintList.setModel(constraintListModel);
         houseList.setModel(houseListModel);
 
+
+        ////// TO REMOVE /////
         scaleField.setText("10");
         landWidthField.setText("50");
         landHeightField.setText("50");
@@ -274,20 +260,14 @@ public class MainFrame extends JFrame {
     }
 
     private void showRoomManagementPanel(House house, Room room) {
-        //hideChangingPanel();
-        if(!(room == null)) {
-            roomManagement.setExistingRoom(room);
-        }
-        changingPanel.setVisible(true);
+        roomManagement.setExistingRoom(room);
         roomManagement.setHouse(house);
+        changingPanel.setVisible(true);
         cardLayout.show(changingPanel, ROOM);
     }
 
     private void showConstraintManagementPanel(Constraint constraint) {
-        //hideChangingPanel();
-        if(!(constraint == null)) {
-            constraintMananagement.setExistingConstraint(constraint);
-        }
+        constraintMananagement.setExistingConstraint(constraint);
         changingPanel.setVisible(true);
         cardLayout.show(changingPanel, CONSTRAINT);
     }
@@ -321,8 +301,12 @@ public class MainFrame extends JFrame {
         double scale;
         double landWidth;
         double landHeight;
+        ScaleConverter scaleConverter;
+        Land land;
+        ConstraintManager constraintManager;
+        Land landCopy;
 
-        if(houseListModel.isEmpty()) {
+        if (houseListModel.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Il doit y avoir au moins une maison");
             return;
         }
@@ -331,40 +315,37 @@ public class MainFrame extends JFrame {
             scale = Double.parseDouble(scaleField.getText());
             landWidth = Double.parseDouble(landWidthField.getText());
             landHeight = Double.parseDouble(landHeightField.getText());
-            if (scale <= 0 || landWidth <= 0 || landHeight <= 0) {
-                JOptionPane.showMessageDialog(this, "L'échelle et les dimensions du terrain doivent être positives.");
-                return;
+
+            scaleConverter = new ScaleConverter((int) scale);
+            drawingPanel.setScaleConverter(scaleConverter);
+
+            land = new Land(landWidth, landHeight);
+            List<House> houses = new ArrayList<>();
+            for (int i = 0; i < houseListModel.size(); i++) {
+                House h = houseListModel.get(i);
+                houses.add(h);
             }
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Veuillez entrer des valeurs numériques valides pour l'échelle et les dimensions du terrain.");
+            land.setHouses(houses);
+
+            List<Room> rooms = getRoomsFromInput();
+            constraintManager = new ConstraintManager();
+            setupConstraints(rooms, constraintManager);
+            landCopy = land.copy();
+            PlanGenerator generator = new PlanGenerator();
+            generator.generate(landCopy, constraintManager);
+
+        } catch (RuntimeException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
             return;
         }
 
-        scaleConverter.setPixelsPerMeter((int) scale);
-
-        land.setWidth(landWidth);
-        land.setHeight(landHeight);
-
-        List<House> houses = new ArrayList<>();
-        for (int i = 0; i < houseListModel.size(); i++) {
-            House h = houseListModel.get(i);
-            houses.add(h);
-        }
-        land.setHouses(houses);
-
-        drawingPanel.setLand(land);
-        drawingPanel.setScaleConverter(scaleConverter);
-
-        List<Room> rooms = getRoomsFromInput();
-        constraintManager.clear();
-        setupConstraints(rooms, constraintManager);
-
-        generator.generate(land, constraintManager);
+        drawingPanel.setLand(landCopy);
         drawingPanel.repaint();
 
-        List<String> errors = validator.validate(land, constraintManager);
+        Validator validator = new Validator();
+        List<String> errors = validator.validate(landCopy, constraintManager);
         if (errors.isEmpty()) {
-            reportArea.setText("=== PLAN GÉNÉRÉ AVEC SUCCÈS ===\nFélicitations ! Le plan a été généré sans aucune erreur ou avertissement.");
+            reportArea.setText("=== PLAN GÉNÉRÉ AVEC SUCCÈS ===\nLe plan a été généré sans aucune erreur ou avertissement.");
             reportArea.setForeground(new Color(34, 139, 34)); // Dark green
         } else {
             StringBuilder sb = new StringBuilder();
@@ -374,6 +355,9 @@ public class MainFrame extends JFrame {
             }
             reportArea.setText(sb.toString());
             reportArea.setForeground(Color.RED);
+
+//            drawingPanel.setLand(new Land());
+//            drawingPanel.repaint();
         }
     }
 
@@ -407,39 +391,47 @@ public class MainFrame extends JFrame {
     }
 
     private void reset() {
-        land.setHouses(new ArrayList<>());
         emptyHouseFields();
+        drawingPanel.setLand(null);
         houseListModel.clear();
         constraintListModel.clear();
         roomListModel.clear();
-        constraintManager.clear();
         reportArea.setText("");
         drawingPanel.repaint();
     }
 
     private void showRoomListFor(House house) {
         roomListModel.clear();
-        if(house == null) {
+        if (house == null) {
             return;
         }
 
         List<Room> rooms = house.getRooms();
-        for(Room r: rooms) {
+        for (Room r : rooms) {
             roomListModel.addElement(r);
         }
     }
 
     private House createHouseFromInputs() throws NumberFormatException {
+        House house = null;
+
         String name = houseNameField.getText();
         double w = Double.parseDouble(houseWidthField.getText());
         double h = Double.parseDouble(houseHeightField.getText());
         double x = Double.parseDouble(houseXField.getText());
         double y = Double.parseDouble(houseYField.getText());
 
-        return new House(name, x, y, w, h);
+        try {
+            house = new House(name, x, y, w, h);
+        } catch (IllegalArgumentException e) {
+            JOptionPane.showMessageDialog(this, e.getMessage());
+            return house;
+        }
+
+        return house;
     }
 
-    private void updateHouseFromInputs(House house) throws  NumberFormatException{
+    private void updateHouseFromInputs(House house) throws NumberFormatException {
         house.setName(houseNameField.getText());
         house.setWidth(Double.parseDouble(houseWidthField.getText()));
         house.setHeight(Double.parseDouble(houseHeightField.getText()));

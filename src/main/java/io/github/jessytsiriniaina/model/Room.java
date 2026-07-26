@@ -14,59 +14,73 @@ public class Room {
 
     private List<Opening> openings = new ArrayList<>();
 
-    public Room(String name, double width, double height) throws  IllegalArgumentException {
-        if (width <= 0 || height <= 0) {
-            throw new IllegalArgumentException("Les dimensions de la pièce doivent être positives.");
+    public Room(String name, double width, double height) throws IllegalArgumentException {
+        setName(name);
+        setWidth(width);
+        setHeight(height);
+    }
+
+    public Room copy() {
+        Room copy = new Room(name, width, height);
+        copy.setX(x);
+        copy.setY(y);
+        for (Opening op : openings) {
+            if (op instanceof Door) {
+                copy.addOpening(new Door(op.getPosition(), op.getOffset(), op.getWidth()));
+            } else {
+                copy.addOpening(new Window(op.getPosition(), op.getOffset(), op.getWidth()));
+            }
         }
-        this.name = name;
-        this.width = width;
-        this.height = height;
+        return copy;
     }
 
     public String getName() {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public double getY() {
-        return y;
-    }
-
-    public void setY(double y) {
-        this.y = y;
-    }
-
-    public double getX() {
-        return x;
-    }
-
-    public void setX(double x) {
-        this.x = x;
+    public double getWidth() {
+        return width;
     }
 
     public double getHeight() {
         return height;
     }
 
-    public void setHeight(double height) {
+    public double getX() {
+        return x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public void setName(String name) throws IllegalArgumentException {
+        if (name.isBlank()) {
+            throw new IllegalArgumentException("Le nom de la piece ne doit pas être vide");
+        }
+        this.name = name;
+    }
+
+    public void setWidth(double width) throws IllegalArgumentException {
+        if (width <= 0) {
+            throw new IllegalArgumentException("La longueur de la piece doit être positive.");
+        }
+        this.width = width;
+    }
+
+    public void setHeight(double height) throws IllegalArgumentException {
         if (height <= 0) {
-            throw new IllegalArgumentException("La largeur doit être positive.");
+            throw new IllegalArgumentException("La largeur de la piece doit être positive.");
         }
         this.height = height;
     }
 
-    public double getWidth() {
-        return width;
+    public void setX(double x) throws IllegalArgumentException {
+        this.x = x;
     }
 
-    public void setWidth(double width) {
-        if (width <= 0) {
-            throw new IllegalArgumentException("Le longueur doit être positif.");
-        }
-        this.width = width;
+    public void setY(double y) throws IllegalArgumentException {
+        this.y = y;
     }
 
     public List<Opening> getOpenings() {
@@ -77,10 +91,6 @@ public class Room {
         if (opening != null) {
             openings.add(opening);
         }
-    }
-
-    public void clearOpenings() {
-        openings.clear();
     }
 
     public List<Door> getDoors() {
@@ -99,10 +109,6 @@ public class Room {
         }
     }
 
-    public void clearDoors() {
-        openings.removeIf(op -> op instanceof Door);
-    }
-
     public List<Window> getWindows() {
         List<Window> list = new ArrayList<>();
         for (Opening op : openings) {
@@ -119,11 +125,6 @@ public class Room {
         }
     }
 
-    public void clearWindows() {
-        openings.removeIf(op -> op instanceof Window);
-    }
-
-
     public boolean hasOverlappingOpenings() {
         for (Position pos : Position.values()) {
             if (pos == Position.NONE) continue;
@@ -133,7 +134,7 @@ public class Room {
                     wallOpenings.add(op);
                 }
             }
-            // Sort by offset
+
             wallOpenings.sort((o1, o2) -> Double.compare(o1.getOffset(), o2.getOffset()));
             for (int i = 0; i < wallOpenings.size() - 1; i++) {
                 Opening current = wallOpenings.get(i);
@@ -141,7 +142,7 @@ public class Room {
                 double currentEnd = current.getOffset() + current.getWidth() / 2.0;
                 double nextStart = next.getOffset() - next.getWidth() / 2.0;
                 if (currentEnd > nextStart) {
-                    return true; // Overlap detected
+                    return true;
                 }
             }
         }
@@ -174,13 +175,13 @@ public class Room {
     }
 
     public void changeTo(Room room) {
-        if(room == null) return;
+        if (room == null) return;
         this.name = room.getName();
         this.width = room.getWidth();
         this.height = room.getHeight();
 
         this.openings.clear();
-        for(Opening op : room.getOpenings()) {
+        for (Opening op : room.getOpenings()) {
             this.addOpening(op);
         }
     }

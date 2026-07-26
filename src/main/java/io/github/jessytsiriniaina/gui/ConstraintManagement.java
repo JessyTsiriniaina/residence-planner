@@ -28,6 +28,7 @@ public class ConstraintManagement {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 parent.hideChangingPanel();
+                existingConstraint = null;
             }
         });
 
@@ -84,7 +85,6 @@ public class ConstraintManagement {
             @Override
             public void componentHidden(ComponentEvent e) {
                 super.componentHidden(e);
-                existingConstraint = null;
             }
         });
     }
@@ -117,7 +117,15 @@ public class ConstraintManagement {
         if (existingConstraint == null) return;
         firstRoom.setSelectedItem(existingConstraint.getRoom1());
         secondRoom.setSelectedItem(existingConstraint.getRoom2());
-        constraintBox.setSelectedItem(existingConstraint.getType());
+        ConstraintType typeRecherche = existingConstraint.getType();
+
+        for (int j = 0; j < constraintBox.getItemCount(); j++) {
+            ConstraintTypeWrapper wrapper = (ConstraintTypeWrapper) constraintBox.getItemAt(j);
+            if (wrapper.getType().equals(typeRecherche)) {
+                constraintBox.setSelectedItem(wrapper);
+                break;
+            }
+        }
     }
 
     private boolean constraintAlreadyExists(

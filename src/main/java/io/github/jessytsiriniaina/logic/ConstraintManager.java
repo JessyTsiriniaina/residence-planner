@@ -10,7 +10,6 @@ import java.util.Map;
 
 public class ConstraintManager {
     private List<Constraint> relationships = new ArrayList<>();
-    private Map<Room, List<Constraint>> roomConstraints = new HashMap<>();
 
     public void addRelationship(Constraint relationship) {
         relationships.add(relationship);
@@ -19,18 +18,4 @@ public class ConstraintManager {
     public List<Constraint> getRelationships() {
         return relationships;
     }
-
-    public void addConstraint(Room room, Constraint constraint) {
-        roomConstraints.computeIfAbsent(room, k -> new ArrayList<>()).add(constraint);
-    }
-
-    public Map<Room, List<Constraint>> getRoomConstraints() {
-        return roomConstraints;
-    }
-
-    public void clear() {
-        relationships.clear();
-        roomConstraints.clear();
-    }
-
 }

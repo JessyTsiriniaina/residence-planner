@@ -9,12 +9,9 @@ public class Window extends Opening{
         super(position, offset, width);
     }
 
-    public Window(Position position, double offset, double width, String label) {
-        super(position, offset, width, label);
-    }
 
     @Override
     public String toString() {
-        return "Fenêtre " + getPosition() + " (" + getOffset() + "m, " + getWidth() + "m)" + (getLabel().isEmpty() ? "" : " - " + getLabel());
+        return "Fenêtre " + getPosition() + " (" + getOffset() + "m, " + getWidth() + "m)";
     }
 }

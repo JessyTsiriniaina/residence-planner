@@ -45,9 +45,11 @@ public class RoomManagement {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 parent.hideChangingPanel();
+                existingRoom = null;
                 openingConfigurationPanel.setVisible(false);
             }
         });
+
         addDoorButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -55,6 +57,7 @@ public class RoomManagement {
                 isAddingDoor = true;
             }
         });
+
         addWIndowButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -62,6 +65,7 @@ public class RoomManagement {
                 isAddingDoor = false;
             }
         });
+
         cancelOpeningConfigurationButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -69,6 +73,7 @@ public class RoomManagement {
                 isAddingDoor = false;
             }
         });
+
         OKRoomConfigurationButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -81,9 +86,16 @@ public class RoomManagement {
                     height = Double.parseDouble(roomHeight.getText());
                 } catch (NumberFormatException e) {
                     JOptionPane.showMessageDialog(parent, "Veuillez entrer des valeurs numériques valides pour la longueur et la largeur");
+                    return;
                 }
 
-                Room newRoom = new Room(name, width, height);
+                Room newRoom = null;
+                try {
+                    newRoom = new Room(name, width, height);
+                } catch (IllegalArgumentException e) {
+                    JOptionPane.showMessageDialog(parent, e.getMessage());
+                    return;
+                }
 
                 for (int i = 0; i < doorListModel.getSize(); i++) {
                     newRoom.addDoor(doorListModel.getElementAt(i));
@@ -112,41 +124,46 @@ public class RoomManagement {
                 }
 
                 emptyInputsFields();
-                JOptionPane.showMessageDialog(parent, "Piece " + name + "(" + width + "m x " + height + "m)" +" cree avec succes");
+                JOptionPane.showMessageDialog(parent, "Piece " + name + "(" + width + "m x " + height + "m)" + " enregistrée avec succes");
                 existingRoom = null;
             }
         });
+
         roomManagementPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentHidden(ComponentEvent e) {
                 super.componentHidden(e);
-                existingRoom = null;
                 emptyInputsFields();
             }
         });
+
         roomManagementPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent e) {
                 super.componentShown(e);
+                emptyInputsFields();
                 if (!(existingRoom == null)) {
                     setupExistingValue();
                 }
             }
         });
+
         deleteDoorButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 int selected = doorList.getSelectedIndex();
-                if(selected != -1) doorListModel.remove(selected);
+                if (selected != -1) doorListModel.remove(selected);
             }
         });
+
         deleteWindowButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 int selected = windowList.getSelectedIndex();
-                if(selected != -1) windowListModel.remove(selected);
+                if (selected != -1) windowListModel.remove(selected);
             }
         });
+
         openingConfigurationPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentHidden(ComponentEvent e) {
@@ -155,10 +172,11 @@ public class RoomManagement {
                 isAddingDoor = false;
             }
         });
+
         OKOpeningConfigurationButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                if(positionBox.getSelectedItem().equals(Position.NONE)) {
+                if (positionBox.getSelectedItem().equals(Position.NONE)) {
                     return;
                 }
 
@@ -178,11 +196,11 @@ public class RoomManagement {
                     return;
                 }
 
-                if(isAddingDoor) {
+                if (isAddingDoor) {
                     Door newDoor = new Door((Position) positionBox.getSelectedItem());
                     doorListModel.addElement(newDoor);
                 } else {
-                    Window newWindow= new Window((Position) positionBox.getSelectedItem());
+                    Window newWindow = new Window((Position) positionBox.getSelectedItem());
                     windowListModel.addElement(newWindow);
                 }
 
@@ -227,11 +245,11 @@ public class RoomManagement {
         roomWidth.setText(String.valueOf(existingRoom.getWidth()));
         roomHeight.setText(String.valueOf(existingRoom.getHeight()));
 
-        for(Door d: existingRoom.getDoors()) {
+        for (Door d : existingRoom.getDoors()) {
             doorListModel.addElement(d);
         }
 
-        for(Window w: existingRoom.getWindows()) {
+        for (Window w : existingRoom.getWindows()) {
             windowListModel.addElement(w);
         }
     }

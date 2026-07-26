@@ -8,14 +8,21 @@ public class Land {
     private double height;
     private List<House> houses = new ArrayList<>();
 
-
-    public Land(double width, double height) {
-        this.width = width;
-        this.height = height;
+    public Land(double width, double height) throws IllegalArgumentException {
+        this.setWidth(width);
+        this.setHeight(height);
     }
 
     public Land() {
 
+    }
+
+    public Land copy() {
+        Land copy = new Land(width, height);
+        for (House h : houses) {
+            copy.addHouse(h.copy());
+        }
+        return copy;
     }
 
     public double getWidth() {
@@ -26,23 +33,20 @@ public class Land {
         return height;
     }
 
-    public void setHeight(double height) {
-        if (height <= 0) {
-            throw new IllegalArgumentException("La largeur doit être positive.");
-        }
-        this.height = height;
-    }
-
-    public void setWidth(double width) {
+    public void setWidth(double width) throws IllegalArgumentException{
         if (width <= 0) {
-            throw new IllegalArgumentException("Le longueur doit être positif.");
+            throw new IllegalArgumentException("La longueur du terrain doit être positif.");
         }
         this.width = width;
     }
 
-    public double getArea() {
-        return width * height;
+    public void setHeight(double height) throws IllegalArgumentException{
+        if (height <= 0) {
+            throw new IllegalArgumentException("La largeur du terrain doit être positive.");
+        }
+        this.height = height;
     }
+
 
     public List<House> getHouses() {
         return houses;
@@ -56,9 +60,5 @@ public class Land {
         if (house != null) {
             houses.add(house);
         }
-    }
-
-    public void clearHouses() {
-        houses.clear();
     }
 }
