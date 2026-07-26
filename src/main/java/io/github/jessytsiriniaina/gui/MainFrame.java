@@ -17,6 +17,23 @@ import java.util.List;
 import java.util.Objects;
 
 public class MainFrame extends JFrame {
+    static {
+        UIManager.put("ScrollBar.width", 10);
+        UIManager.put("ScrollBar.thumb", new Color(180, 180, 180));
+        UIManager.put("ScrollBar.thumbDarkShadow", new Color(180, 180, 180));
+        UIManager.put("ScrollBar.thumbHighlight", new Color(210, 210, 210));
+        UIManager.put("ScrollBar.thumbShadow", new Color(160, 160, 160));
+        UIManager.put("ScrollBar.track", new Color(245, 245, 245));
+
+        UIManager.put("ComboBox.background", new Color(240, 240, 240));
+        UIManager.put("ComboBox.foreground", Color.BLACK);
+        UIManager.put("ComboBox.selectionBackground", new Color(210, 225, 240));
+        UIManager.put("ComboBox.selectionForeground", Color.BLACK);
+        UIManager.put("ComboBox.buttonBackground", new Color(230, 230, 230));
+        UIManager.put("ComboBox.buttonShadow", new Color(200, 200, 200));
+        UIManager.put("ComboBox.buttonDarkShadow", new Color(180, 180, 180));
+        UIManager.put("ComboBox.buttonHighlight", new Color(245, 245, 245));
+    }
     private JPanel mainPanel;
     private DrawingPanel drawingPanel;
     private JPanel propertiesPanel;
@@ -223,10 +240,54 @@ public class MainFrame extends JFrame {
         });
     }
 
+    private void styleTextField(JTextField field) {
+        if (field == null) return;
+        field.setBorder(new RoundedCornerBorder());
+    }
+
+    private void styleScrollPanes(Container container) {
+        for (Component c : container.getComponents()) {
+            if (c instanceof JScrollPane) {
+                ((JScrollPane) c).setBorder(null);
+            }
+            if (c instanceof Container) {
+                styleScrollPanes((Container) c);
+            }
+        }
+    }
+
+    private void styleJList(JList<?> list) {
+        if (list == null) return;
+        list.setBorder(new RoundedCornerBorder(8));
+        Container parent = list.getParent();
+        if (parent instanceof JViewport) {
+            Container scrollpane = parent.getParent();
+            if (scrollpane instanceof JScrollPane) {
+                ((JScrollPane) scrollpane).setBorder(null);
+                ((JScrollPane) scrollpane).setViewportBorder(null);
+            }
+        }
+    }
+
     private void setup() {
         setContentPane(mainPanel);
         setTitle("Residence Planer");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        styleTextField(landWidthField);
+        styleTextField(landHeightField);
+        styleTextField(scaleField);
+        styleTextField(houseWidthField);
+        styleTextField(houseHeightField);
+        styleTextField(houseXField);
+        styleTextField(houseYField);
+        styleTextField(houseNameField);
+
+        styleJList(roomList);
+        styleJList(constraintList);
+        styleJList(houseList);
+
+        SwingUtilities.invokeLater(() -> styleScrollPanes(mainPanel));
 
         pack(); // Adjust frame size based on content | Can be replaced with setSize()
         setVisible(true);
@@ -340,6 +401,7 @@ public class MainFrame extends JFrame {
         }
 
         drawingPanel.setLand(landCopy);
+        drawingPanel.updatePreferredSize();
         drawingPanel.repaint();
 
         Validator validator = new Validator();
@@ -393,6 +455,7 @@ public class MainFrame extends JFrame {
     private void reset() {
         emptyHouseFields();
         drawingPanel.setLand(null);
+        drawingPanel.updatePreferredSize();
         houseListModel.clear();
         constraintListModel.clear();
         roomListModel.clear();

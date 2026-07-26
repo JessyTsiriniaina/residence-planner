@@ -95,10 +95,7 @@ public class SketchRenderer {
 
             for (int i = 0; i < count; i++) {
                 Opening op = list.get(i);
-                int size = isDoor ?  25 : 35;
-                if (op.getWidth() > 0 && op.getWidth() != 1.0) {
-                    size = sc.toPixels(op.getWidth());
-                }
+                int size = Math.max(sc.toPixels(op.getWidth()), 8);
 
                 if (isDoor) {
                     g.setColor(new Color(139, 69, 19)); // Saddle Brown

@@ -5,6 +5,8 @@ import io.github.jessytsiriniaina.model.Room;
 import io.github.jessytsiriniaina.model.Constraint;
 
 import javax.swing.*;
+import java.awt.Color;
+import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -21,9 +23,17 @@ public class ConstraintManagement {
     private final MainFrame parent;
     private Constraint existingConstraint;
 
+    private void styleComboBox(JComboBox<?> box) {
+        if (box == null) return;
+        box.setBorder(null);
+        box.setBackground(new Color(240, 240, 240));
+    }
+
     public ConstraintManagement(MainFrame parent) {
         this.parent = parent;
-        fillConstraintType();
+        styleComboBox(firstRoom);
+        styleComboBox(constraintBox);
+        styleComboBox(secondRoom);
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -87,6 +97,8 @@ public class ConstraintManagement {
                 super.componentHidden(e);
             }
         });
+
+        fillConstraintType();
     }
 
     public JPanel getConstraintPanel() {

@@ -3,10 +3,10 @@ package io.github.jessytsiriniaina.gui;
 import io.github.jessytsiriniaina.model.*;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.event.*;
 import java.util.Objects;
 
 public class RoomManagement {
@@ -35,6 +35,7 @@ public class RoomManagement {
     private DefaultListModel<Door> doorListModel = new DefaultListModel<>();
     private DefaultListModel<Window> windowListModel = new DefaultListModel<>();
     private boolean isAddingDoor = false;
+    private Opening editingOpening = null;
 
 
     public RoomManagement(MainFrame parent) {
@@ -53,6 +54,7 @@ public class RoomManagement {
         addDoorButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                editingOpening = null;
                 openingConfigurationPanel.setVisible(true);
                 isAddingDoor = true;
             }
@@ -61,6 +63,7 @@ public class RoomManagement {
         addWIndowButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                editingOpening = null;
                 openingConfigurationPanel.setVisible(true);
                 isAddingDoor = false;
             }
@@ -69,6 +72,7 @@ public class RoomManagement {
         cancelOpeningConfigurationButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
+                editingOpening = null;
                 openingConfigurationPanel.setVisible(false);
                 isAddingDoor = false;
             }
@@ -164,12 +168,37 @@ public class RoomManagement {
             }
         });
 
+        doorList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int index = doorList.locationToIndex(e.getPoint());
+                    if (index != -1) {
+                        editOpening(doorListModel.getElementAt(index), true);
+                    }
+                }
+            }
+        });
+
+        windowList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    int index = windowList.locationToIndex(e.getPoint());
+                    if (index != -1) {
+                        editOpening(windowListModel.getElementAt(index), false);
+                    }
+                }
+            }
+        });
+
         openingConfigurationPanel.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentHidden(ComponentEvent e) {
                 super.componentHidden(e);
                 positionBox.setSelectedIndex(0);
                 isAddingDoor = false;
+                editingOpening = null;
             }
         });
 
@@ -177,12 +206,16 @@ public class RoomManagement {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 if (positionBox.getSelectedItem().equals(Position.NONE)) {
+                    JOptionPane.showMessageDialog(parent, "Veuillez sélectionner une position.");
                     return;
                 }
 
+                double offset = 0;
+                double width = 1.0;
+
                 try {
-                    double offset = Double.parseDouble(offsetField.getText());
-                    double width = Double.parseDouble(openingWidthField.getText());
+                    offset = Double.parseDouble(offsetField.getText());
+                    width = Double.parseDouble(openingWidthField.getText());
                     if (width <= 0) {
                         JOptionPane.showMessageDialog(parent, "La largeur de l'ouverture doit être positive.");
                         return;
@@ -196,24 +229,81 @@ public class RoomManagement {
                     return;
                 }
 
-                if (isAddingDoor) {
-                    Door newDoor = new Door((Position) positionBox.getSelectedItem());
+                if (editingOpening != null) {
+                    editingOpening.setPosition((Position) positionBox.getSelectedItem());
+                    try {
+                        editingOpening.setOffset(offset);
+                        editingOpening.setWidth(width);
+                    } catch (IllegalArgumentException e) {
+                        JOptionPane.showMessageDialog(parent, e.getMessage());
+                        return;
+                    }
+                    doorList.repaint();
+                    windowList.repaint();
+                } else if (isAddingDoor) {
+                    Door newDoor = new Door((Position) positionBox.getSelectedItem(), offset, width);
                     doorListModel.addElement(newDoor);
                 } else {
-                    Window newWindow = new Window((Position) positionBox.getSelectedItem());
+                    Window newWindow = new Window((Position) positionBox.getSelectedItem(), offset, width);
                     windowListModel.addElement(newWindow);
                 }
 
+                editingOpening = null;
                 positionBox.setSelectedIndex(0);
                 openingWidthField.setText("");
                 offsetField.setText("");
                 openingConfigurationPanel.setVisible(false);
-
             }
         });
     }
 
+    private void styleTextField(JTextField field) {
+        if (field == null) return;
+        field.setBorder(new RoundedCornerBorder());
+    }
+
+    private void styleJList(JList<?> list) {
+        if (list == null) return;
+        list.setBorder(new RoundedCornerBorder(8));
+        Container parent = list.getParent();
+        if (parent instanceof JViewport) {
+            Container scrollpane = parent.getParent();
+            if (scrollpane instanceof JScrollPane) {
+                ((JScrollPane) scrollpane).setBorder(null);
+                ((JScrollPane) scrollpane).setViewportBorder(null);
+            }
+        }
+    }
+
+    private void styleScrollPanes(Container container) {
+        for (Component c : container.getComponents()) {
+            if (c instanceof JScrollPane) {
+                ((JScrollPane) c).setBorder(null);
+            }
+            if (c instanceof Container) {
+                styleScrollPanes((Container) c);
+            }
+        }
+    }
+
+    private void styleComboBox(JComboBox<?> box) {
+        if (box == null) return;
+        box.setBorder(null);
+        box.setBackground(new Color(240, 240, 240));
+    }
+
     private void setup() {
+        styleTextField(roomName);
+        styleTextField(roomWidth);
+        styleTextField(roomHeight);
+        styleTextField(openingWidthField);
+        styleTextField(offsetField);
+
+        styleJList(doorList);
+        styleJList(windowList);
+        styleComboBox(positionBox);
+        SwingUtilities.invokeLater(() -> styleScrollPanes(roomManagementPanel));
+
         doorList.setModel(doorListModel);
         windowList.setModel(windowListModel);
         fillPositionBox();
@@ -233,6 +323,15 @@ public class RoomManagement {
         offsetField.setText("");
         positionBox.setSelectedIndex(0);
         isAddingDoor = false;
+    }
+
+    private void editOpening(Opening opening, boolean isDoor) {
+        editingOpening = opening;
+        isAddingDoor = isDoor;
+        positionBox.setSelectedItem(opening.getPosition());
+        openingWidthField.setText(String.valueOf(opening.getWidth()));
+        offsetField.setText(String.valueOf(opening.getOffset()));
+        openingConfigurationPanel.setVisible(true);
     }
 
     public void setExistingRoom(Room existingRoom) {

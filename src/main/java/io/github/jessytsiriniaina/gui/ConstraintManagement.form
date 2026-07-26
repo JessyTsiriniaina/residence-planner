@@ -92,6 +92,7 @@
             </constraints>
             <properties>
               <text value="Fermer"/>
+              <toolTipText value=""/>
             </properties>
           </component>
           <hspacer id="448db">
