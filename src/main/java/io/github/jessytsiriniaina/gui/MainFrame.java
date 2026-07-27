@@ -19,20 +19,20 @@ import java.util.Objects;
 public class MainFrame extends JFrame {
     static {
         UIManager.put("ScrollBar.width", 10);
-        UIManager.put("ScrollBar.thumb", new Color(180, 180, 180));
-        UIManager.put("ScrollBar.thumbDarkShadow", new Color(180, 180, 180));
-        UIManager.put("ScrollBar.thumbHighlight", new Color(210, 210, 210));
-        UIManager.put("ScrollBar.thumbShadow", new Color(160, 160, 160));
-        UIManager.put("ScrollBar.track", new Color(245, 245, 245));
+        UIManager.put("ScrollBar.thumb", Colors.SCROLLBAR_THUMB);
+        UIManager.put("ScrollBar.thumbDarkShadow", Colors.SCROLLBAR_THUMB_DARK_SHADOW);
+        UIManager.put("ScrollBar.thumbHighlight", Colors.SCROLLBAR_THUMB_HIGHLIGHT);
+        UIManager.put("ScrollBar.thumbShadow", Colors.SCROLLBAR_THUMB_SHADOW);
+        UIManager.put("ScrollBar.track", Colors.SCROLLBAR_TRACK);
 
-        UIManager.put("ComboBox.background", new Color(240, 240, 240));
-        UIManager.put("ComboBox.foreground", Color.BLACK);
-        UIManager.put("ComboBox.selectionBackground", new Color(210, 225, 240));
-        UIManager.put("ComboBox.selectionForeground", Color.BLACK);
-        UIManager.put("ComboBox.buttonBackground", new Color(230, 230, 230));
-        UIManager.put("ComboBox.buttonShadow", new Color(200, 200, 200));
-        UIManager.put("ComboBox.buttonDarkShadow", new Color(180, 180, 180));
-        UIManager.put("ComboBox.buttonHighlight", new Color(245, 245, 245));
+        UIManager.put("ComboBox.background", Colors.COMBO_BACKGROUND);
+        UIManager.put("ComboBox.foreground", Colors.COMBO_FOREGROUND);
+        UIManager.put("ComboBox.selectionBackground", Colors.COMBO_SELECTION_BG);
+        UIManager.put("ComboBox.selectionForeground", Colors.COMBO_SELECTION_FG);
+        UIManager.put("ComboBox.buttonBackground", Colors.COMBO_BUTTON_BG);
+        UIManager.put("ComboBox.buttonShadow", Colors.COMBO_BUTTON_SHADOW);
+        UIManager.put("ComboBox.buttonDarkShadow", Colors.COMBO_BUTTON_DARK_SHADOW);
+        UIManager.put("ComboBox.buttonHighlight", Colors.COMBO_BUTTON_HIGHLIGHT);
     }
     private JPanel mainPanel;
     private DrawingPanel drawingPanel;
@@ -366,6 +366,7 @@ public class MainFrame extends JFrame {
         Land land;
         ConstraintManager constraintManager;
         Land landCopy;
+        PlanGenerator generator;
 
         if (houseListModel.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Il doit y avoir au moins une maison");
@@ -392,7 +393,7 @@ public class MainFrame extends JFrame {
             constraintManager = new ConstraintManager();
             setupConstraints(rooms, constraintManager);
             landCopy = land.copy();
-            PlanGenerator generator = new PlanGenerator();
+            generator = new PlanGenerator();
             generator.generate(landCopy, constraintManager);
 
         } catch (RuntimeException e) {
@@ -405,10 +406,10 @@ public class MainFrame extends JFrame {
         drawingPanel.repaint();
 
         Validator validator = new Validator();
-        List<String> errors = validator.validate(landCopy, constraintManager);
+        List<String> errors = validator.validate(landCopy, generator.getRemappedConstraints());
         if (errors.isEmpty()) {
             reportArea.setText("=== PLAN GÉNÉRÉ AVEC SUCCÈS ===\nLe plan a été généré sans aucune erreur ou avertissement.");
-            reportArea.setForeground(new Color(34, 139, 34)); // Dark green
+            reportArea.setForeground(Colors.REPORT_SUCCESS);
         } else {
             StringBuilder sb = new StringBuilder();
             sb.append("=== RAPPORT DE VALIDATION (" + errors.size() + " avertissement(s)/erreur(s)) ===\n");
@@ -416,7 +417,7 @@ public class MainFrame extends JFrame {
                 sb.append("- ").append(err).append("\n");
             }
             reportArea.setText(sb.toString());
-            reportArea.setForeground(Color.RED);
+            reportArea.setForeground(Colors.REPORT_ERROR);
 
 //            drawingPanel.setLand(new Land());
 //            drawingPanel.repaint();

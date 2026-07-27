@@ -10,20 +10,21 @@ import java.util.Map;
 import java.util.List;
 
 public class SketchRenderer {
+
+    private record OpeningCoord(int cx, int cy, int swingSide) {}
+
     public void render(Graphics2D g, Land land, ScaleConverter sc) {
         int tw = sc.toPixels(land.getWidth());
         int th = sc.toPixels(land.getHeight());
 
-        // Draw Terrain Boundary
-        g.setColor(new Color(240, 255, 240));
+        g.setColor(Colors.TERRAIN_FILL);
         g.fillRect(0, 0, tw, th);
-        g.setColor(new Color(34, 139, 34)); // Forest Green
+        g.setColor(Colors.TERRAIN_BORDER);
         g.setStroke(new BasicStroke(1.5F));
         g.drawRect(0, 0, tw, th);
-        g.setFont(new Font("Arial", Font.PLAIN , 11));
+        g.setFont(new Font("Arial", Font.PLAIN, 11));
         g.drawString(String.format("Terrain: %.1f m x %.1f m", land.getWidth(), land.getHeight()), 5, th - 5);
 
-        // Render all houses on the land
         for (House house : land.getHouses()) {
             if (house != null) {
                 int w = sc.toPixels(house.getWidth());
@@ -31,16 +32,18 @@ public class SketchRenderer {
                 int x = sc.toPixels(house.getX());
                 int y = sc.toPixels(house.getY());
 
-                // Draw House Boundary
-                g.setColor(Color.BLACK);
+                g.setColor(Colors.HOUSE_BORDER);
                 g.setStroke(new BasicStroke(2));
                 g.drawRect(x, y, w, h);
 
-                // Draw House Dimensions
                 g.setFont(new Font("Arial", Font.PLAIN, 11));
-                g.drawString(String.format("%s: %.1f m x %.1f m (%.1f m²)", house.getName(), house.getWidth(), house.getHeight(), house.getWidth() * house.getHeight()), sc.toPixels(house.getX() + 1), sc.toPixels((house.getHeight() + house.getY() + 2)));
+                FontMetrics fm = g.getFontMetrics();
+                String name = house.getName();
+                int labelX = x + (w - fm.stringWidth(name)) / 2;
+                int labelY = y - fm.getDescent() - 2;
+                g.setColor(Colors.HOUSE_TEXT);
+                g.drawString(name, labelX, labelY);
 
-                // Draw Rooms
                 for (Room room : house.getRooms()) {
                     drawRoom(g, room, sc);
                 }
@@ -54,31 +57,22 @@ public class SketchRenderer {
         int w = sc.toPixels(room.getWidth());
         int h = sc.toPixels(room.getHeight());
 
-        // Fill room
-        g.setColor(new Color(245, 245, 245));
+        g.setColor(Colors.ROOM_FILL);
         g.fillRect(x, y, w, h);
 
-        // Room border
-        g.setColor(Color.DARK_GRAY);
+        g.setColor(Colors.ROOM_BORDER);
         g.setStroke(new BasicStroke(2));
         g.drawRect(x, y, w, h);
 
-        // Room label and dimensions
-        g.setColor(Color.BLACK);
-        g.setFont(new Font("Arial", Font.BOLD, 11));
-        FontMetrics fm = g.getFontMetrics();
-        String name = room.getName();
-        g.drawString(name, x + (w - fm.stringWidth(name)) / 2, y + h / 2 - 5);
+        if (h >= 20 && w >= 40) {
+            g.setColor(Colors.ROOM_TEXT);
+            g.setFont(new Font("Arial", Font.BOLD, 11));
+            FontMetrics fm = g.getFontMetrics();
+            String name = room.getName();
+            g.drawString(name, x + (w - fm.stringWidth(name)) / 2, y + h / 2 + 4);
+        }
 
-        g.setFont(new Font("Arial", Font.PLAIN, 10));
-        fm = g.getFontMetrics();
-        String dims = String.format("%.1f m × %.1f m", room.getWidth(), room.getHeight());
-        g.drawString(dims, x + (w - fm.stringWidth(dims)) / 2, y + h / 2 + 10);
-
-        // Draw doors
         drawOpenings(g, x, y, w, h, room.getDoors(), true, sc);
-
-        // Draw windows
         drawOpenings(g, x, y, w, h, room.getWindows(), false, sc);
     }
 
@@ -98,60 +92,63 @@ public class SketchRenderer {
                 int size = Math.max(sc.toPixels(op.getWidth()), 8);
 
                 if (isDoor) {
-                    g.setColor(new Color(139, 69, 19)); // Saddle Brown
+                    g.setColor(Colors.DOOR);
                     g.setStroke(new BasicStroke(4));
                 } else {
-                    g.setColor(new Color(100, 200, 255));
+                    g.setColor(Colors.WINDOW);
                     g.setStroke(new BasicStroke(3));
                 }
 
-                int cx, cy;
-                if (pos == Position.NORTH) {
-                    if (op.getOffset() > 0) {
-                        cx = x + sc.toPixels(op.getOffset());
-                    } else {
-                        double offsetFrac = (i + 1.0) / (count + 1.0);
-                        cx = x + (int)(w * offsetFrac);
-                    }
-                    g.drawLine(cx - size/2, y, cx + size/2, y);
-                    if (isDoor) drawDoorSwing(g, cx, y, size, -1);
-                } else if (pos == Position.SOUTH) {
-                    if (op.getOffset() > 0) {
-                        cx = x + sc.toPixels(op.getOffset());
-                    } else {
-                        double offsetFrac = (i + 1.0) / (count + 1.0);
-                        cx = x + (int)(w * offsetFrac);
-                    }
-                    g.drawLine(cx - size/2, y + h, cx + size/2, y + h);
-                    if (isDoor) drawDoorSwing(g, cx, y + h, size, 1);
-                } else if (pos == Position.EAST) {
-                    if (op.getOffset() > 0) {
-                        cy = y + sc.toPixels(op.getOffset());
-                    } else {
-                        double offsetFrac = (i + 1.0) / (count + 1.0);
-                        cy = y + (int)(h * offsetFrac);
-                    }
-                    g.drawLine(x + w, cy - size/2, x + w, cy + size/2);
-                    if (isDoor) drawDoorSwing(g, x + w, cy, size, 2);
-                } else if (pos == Position.WEST) {
-                    if (op.getOffset() > 0) {
-                        cy = y + sc.toPixels(op.getOffset());
-                    } else {
-                        double offsetFrac = (i + 1.0) / (count + 1.0);
-                        cy = y + (int)(h * offsetFrac);
-                    }
-                    g.drawLine(x, cy - size/2, x, cy + size/2);
-                    if (isDoor) drawDoorSwing(g, x, cy, size, 3);
+                OpeningCoord p = computeOpeningPos(x, y, w, h, op, i, count, pos, sc);
+
+                boolean horizontal = pos == Position.NORTH || pos == Position.SOUTH;
+                if (horizontal) {
+                    g.drawLine(p.cx() - size / 2, p.cy(), p.cx() + size / 2, p.cy());
+                } else {
+                    g.drawLine(p.cx(), p.cy() - size / 2, p.cx(), p.cy() + size / 2);
                 }
+
+//                if (isDoor) {
+//                    drawDoorSwing(g, p.cx(), p.cy(), size, p.swingSide());
+//                }
             }
         }
     }
 
+    private OpeningCoord computeOpeningPos(int x, int y, int w, int h, Opening op, int i, int count, Position pos, ScaleConverter sc) {
+        int cx, cy, swingSide;
+
+        switch (pos) {
+            case NORTH:
+                cx = (op.getOffset() > 0) ? x + sc.toPixels(op.getOffset()) : x + (int) (w * (i + 1.0) / (count + 1.0));
+                cy = y;
+                swingSide = -1;
+                break;
+            case SOUTH:
+                cx = (op.getOffset() > 0) ? x + sc.toPixels(op.getOffset()) : x + (int) (w * (i + 1.0) / (count + 1.0));
+                cy = y + h;
+                swingSide = 1;
+                break;
+            case EAST:
+                cx = x + w;
+                cy = (op.getOffset() > 0) ? y + sc.toPixels(op.getOffset()) : y + (int) (h * (i + 1.0) / (count + 1.0));
+                swingSide = 2;
+                break;
+            default:
+                cx = x;
+                cy = (op.getOffset() > 0) ? y + sc.toPixels(op.getOffset()) : y + (int) (h * (i + 1.0) / (count + 1.0));
+                swingSide = 3;
+                break;
+        }
+
+        return new OpeningCoord(cx, cy, swingSide);
+    }
+
     private void drawDoorSwing(Graphics2D g, int x, int y, int size, int side) {
         g.setStroke(new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 0, new float[]{3}, 0));
-        if (side == -1) g.drawArc(x - size/2, y - size/2, size, size, 0, 90);
-        else if (side == 1) g.drawArc(x - size/2, y - size/2, size, size, 180, 90);
-        else if (side == 2) g.drawArc(x - size/2, y - size/2, size, size, 90, 90);
-        else if (side == 3) g.drawArc(x - size/2, y - size/2, size, size, 270, 90);
+        if (side == -1) g.drawArc(x - size / 2, y - size / 2, size, size, 0, 90);
+        else if (side == 1) g.drawArc(x - size / 2, y - size / 2, size, size, 180, 90);
+        else if (side == 2) g.drawArc(x - size / 2, y - size / 2, size, size, 90, 90);
+        else if (side == 3) g.drawArc(x - size / 2, y - size / 2, size, size, 270, 90);
     }
 }

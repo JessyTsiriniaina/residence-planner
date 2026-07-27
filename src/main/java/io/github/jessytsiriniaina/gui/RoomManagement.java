@@ -3,7 +3,7 @@ package io.github.jessytsiriniaina.gui;
 import io.github.jessytsiriniaina.model.*;
 
 import javax.swing.*;
-import java.awt.Color;
+
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.event.*;
@@ -289,7 +289,7 @@ public class RoomManagement {
     private void styleComboBox(JComboBox<?> box) {
         if (box == null) return;
         box.setBorder(null);
-        box.setBackground(new Color(240, 240, 240));
+        box.setBackground(Colors.COMBO_BACKGROUND);
     }
 
     private void setup() {

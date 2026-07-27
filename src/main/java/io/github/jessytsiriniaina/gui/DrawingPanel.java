@@ -45,26 +45,26 @@ public class DrawingPanel extends JPanel {
         int w = 120;
         int h = 60;
 
-        g.setColor(new Color(255, 255, 255, 200));
+        g.setColor(Colors.LEGEND_BG);
         g.fillRect(x, y, w, h);
-        g.setColor(Color.DARK_GRAY);
+        g.setColor(Colors.LEGEND_BORDER);
         g.setStroke(new BasicStroke(1));
         g.drawRect(x, y, w, h);
 
         g.setFont(new Font("Arial", Font.PLAIN, 12));
         int ly = y + 20;
 
-        g.setColor(new Color(139, 69, 19));
+        g.setColor(Colors.DOOR);
         g.setStroke(new BasicStroke(4));
         g.drawLine(x + 8, ly, x + 28, ly);
-        g.setColor(Color.BLACK);
+        g.setColor(Colors.LEGEND_TEXT);
         g.drawString("Porte", x + 34, ly + 4);
 
         ly += 22;
-        g.setColor(new Color(100, 200, 255));
+        g.setColor(Colors.WINDOW);
         g.setStroke(new BasicStroke(3));
         g.drawLine(x + 8, ly, x + 28, ly);
-        g.setColor(Color.BLACK);
+        g.setColor(Colors.LEGEND_TEXT);
         g.drawString("Fenêtre", x + 34, ly + 4);
     }
 

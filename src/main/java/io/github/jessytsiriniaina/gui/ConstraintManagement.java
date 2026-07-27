@@ -5,7 +5,7 @@ import io.github.jessytsiriniaina.model.Room;
 import io.github.jessytsiriniaina.model.Constraint;
 
 import javax.swing.*;
-import java.awt.Color;
+
 import java.awt.Container;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -26,7 +26,7 @@ public class ConstraintManagement {
     private void styleComboBox(JComboBox<?> box) {
         if (box == null) return;
         box.setBorder(null);
-        box.setBackground(new Color(240, 240, 240));
+        box.setBackground(Colors.COMBO_BACKGROUND);
     }
 
     public ConstraintManagement(MainFrame parent) {
