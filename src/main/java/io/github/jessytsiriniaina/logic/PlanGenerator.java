@@ -10,7 +10,8 @@ public class PlanGenerator {
     public static final double CONNECTIVITY_NEIGHBOR_RADIUS = 0.5;
 
     private static final double SEARCH_STEP = 1.0;
-    private static final double[] ADJACENT_OFFSET_STEPS = {0.0, 0.5, 1.0, 1.5, 2.0};
+    private static final double[] ADJACENT_OFFSET_STEPS = {0.0};
+    private static final double ALIGNMENT_GROUP_THRESHOLD = 0.15;
     private static final int MAX_OPTIMIZATION_PASSES = 10;
 
     private static final double SURFACE_WEIGHT = 1.0;
@@ -59,9 +60,12 @@ public class PlanGenerator {
             }
 
             optimizeConstraints(house, cm);
+            optimizeGlobalAlignment(house);
+            compactifyLayout(house);
             optimizeAlignment(house);
             healConnectivity(house);
             optimizeConstraints(house, cm);
+            optimizeGlobalAlignment(house);
             optimizeAlignment(house);
             runFinalValidation(house, cm);
         }
@@ -370,6 +374,131 @@ public class PlanGenerator {
         double dx = x1 - x2;
         double dy = y1 - y2;
         return dx * dx + dy * dy;
+    }
+
+    private void compactifyLayout(House house) {
+        List<Room> rooms = house.getRooms();
+        if (rooms.size() < 2) return;
+        boolean moved;
+        int maxPasses = 5;
+        do {
+            moved = false;
+            List<Room> sortedByX = new ArrayList<>(rooms);
+            sortedByX.sort((a, b) -> Double.compare(a.getX(), b.getX()));
+            for (Room room : sortedByX) {
+                moved |= tryCompactLeft(house, room);
+            }
+            List<Room> sortedByY = new ArrayList<>(rooms);
+            sortedByY.sort((a, b) -> Double.compare(a.getY(), b.getY()));
+            for (Room room : sortedByY) {
+                moved |= tryCompactUp(house, room);
+            }
+        } while (moved && --maxPasses > 0);
+    }
+
+    private boolean tryCompactLeft(House house, Room room) {
+        double minX = house.getX();
+        for (Room other : house.getRooms()) {
+            if (other == room) continue;
+            if (room.getY() < other.getY() + other.getHeight() &&
+                room.getY() + room.getHeight() > other.getY()) {
+                minX = Math.max(minX, other.getX() + other.getWidth());
+            }
+        }
+        double newX = snapToGrid(minX);
+        if (Math.abs(newX - room.getX()) < 0.01) return false;
+        double origX = room.getX();
+        room.setX(newX);
+        if (isValidPosition(house, room)) return true;
+        room.setX(origX);
+        return false;
+    }
+
+    private boolean tryCompactUp(House house, Room room) {
+        double minY = house.getY();
+        for (Room other : house.getRooms()) {
+            if (other == room) continue;
+            if (room.getX() < other.getX() + other.getWidth() &&
+                room.getX() + room.getWidth() > other.getX()) {
+                minY = Math.max(minY, other.getY() + other.getHeight());
+            }
+        }
+        double newY = snapToGrid(minY);
+        if (Math.abs(newY - room.getY()) < 0.01) return false;
+        double origY = room.getY();
+        room.setY(newY);
+        if (isValidPosition(house, room)) return true;
+        room.setY(origY);
+        return false;
+    }
+
+    private void optimizeGlobalAlignment(House house) {
+        List<Room> rooms = house.getRooms();
+        if (rooms.size() < 2) return;
+
+        List<List<Room>> rows = detectRows(rooms);
+        for (List<Room> row : rows) {
+            if (row.size() < 2) continue;
+            double alignY = snapToGrid(row.stream().mapToDouble(Room::getY).min().orElse(0));
+            for (Room room : row) {
+                double origY = room.getY();
+                room.setY(alignY);
+                if (!isValidPosition(house, room)) {
+                    room.setY(origY);
+                }
+            }
+        }
+
+        List<List<Room>> columns = detectColumns(rooms);
+        for (List<Room> col : columns) {
+            if (col.size() < 2) continue;
+            double alignX = snapToGrid(col.stream().mapToDouble(Room::getX).min().orElse(0));
+            for (Room room : col) {
+                double origX = room.getX();
+                room.setX(alignX);
+                if (!isValidPosition(house, room)) {
+                    room.setX(origX);
+                }
+            }
+        }
+    }
+
+    private List<List<Room>> detectRows(List<Room> rooms) {
+        List<Room> sorted = new ArrayList<>(rooms);
+        sorted.sort((a, b) -> Double.compare(a.getY(), b.getY()));
+        List<List<Room>> rows = new ArrayList<>();
+        int i = 0;
+        while (i < sorted.size()) {
+            List<Room> row = new ArrayList<>();
+            double baseY = sorted.get(i).getY();
+            row.add(sorted.get(i));
+            i++;
+            while (i < sorted.size() && Math.abs(sorted.get(i).getY() - baseY) < ALIGNMENT_GROUP_THRESHOLD) {
+                row.add(sorted.get(i));
+                i++;
+            }
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    private List<List<Room>> detectColumns(List<Room> rooms) {
+        List<Room> sorted = new ArrayList<>(rooms);
+        sorted.sort((a, b) -> Double.compare(a.getX(), b.getX()));
+        List<List<Room>> cols = new ArrayList<>();
+        int i = 0;
+        while (i < sorted.size()) {
+            List<Room> col = new ArrayList<>();
+            double baseX = sorted.get(i).getX();
+            col.add(sorted.get(i));
+            i++;
+            while (i < sorted.size() && Math.abs(sorted.get(i).getX() - baseX) < ALIGNMENT_GROUP_THRESHOLD) {
+                col.add(sorted.get(i));
+                i++;
+            }
+            cols.add(col);
+        }
+        return cols;
     }
 
     private boolean tryPlaceNear(House house, Room room, Room other, ConstraintType type) {

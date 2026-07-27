@@ -100,7 +100,7 @@ public class MainFrame extends JFrame {
                 //adapter pour le lier a une maison
                 House house = (House) houseList.getSelectedValue();
                 if (house == null) {
-                    JOptionPane.showMessageDialog(MainFrame.this, "Veuillez choisir une maison pour ajouter une piece.");
+                    JOptionPane.showMessageDialog(MainFrame.this, "Veuillez choisir une maison pour ajouter une piece.", "Erreur", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
                 hideChangingPanel();
@@ -187,8 +187,22 @@ public class MainFrame extends JFrame {
         saveHouseButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
-                //triple clique sur la liste et un bug se produit, il faut le corriger
                 try {
+                    String name = houseNameField.getText();
+                    if (name.isBlank()) {
+                        JOptionPane.showMessageDialog(MainFrame.this, "Le nom de la maison ne peut pas être vide.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
+
+                    for (int i = 0; i < houseListModel.size(); i++) {
+                        House h = houseListModel.get(i);
+                        if (isEditingHouse && h == houseList.getSelectedValue()) continue;
+                        if (h.getName().equals(name)) {
+                            JOptionPane.showMessageDialog(MainFrame.this, "Une maison portant ce nom existe déjà.", "Erreur", JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
+                    }
+
                     if (isEditingHouse) {
                         House house = (House) houseList.getSelectedValue();
                         updateHouseFromInputs(house);
@@ -197,11 +211,12 @@ public class MainFrame extends JFrame {
                         isEditingHouse = false;
                     } else {
                         House newHouse = createHouseFromInputs();
+                        if (newHouse == null) return;
                         houseListModel.addElement(newHouse);
                         showRoomListFor(newHouse);
                     }
                 } catch (NumberFormatException e) {
-                    JOptionPane.showMessageDialog(MainFrame.this, "Veuillez entrer des formats valides");
+                    JOptionPane.showMessageDialog(MainFrame.this, "Veuillez entrer des formats valides", "Erreur", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -217,7 +232,7 @@ public class MainFrame extends JFrame {
                     if (houseListModel.size() > 1) {
                         houseListModel.remove(selected);
                     } else {
-                        JOptionPane.showMessageDialog(MainFrame.this, "Il doit y avoir au moins une maison.");
+                        JOptionPane.showMessageDialog(MainFrame.this, "Il doit y avoir au moins une maison.", "Erreur", JOptionPane.ERROR_MESSAGE);
                     }
                 }
             }
@@ -226,18 +241,24 @@ public class MainFrame extends JFrame {
         houseList.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                House h = (House) houseList.getSelectedValue();
                 if (e.getClickCount() == 2) {
+                    House h = (House) houseList.getSelectedValue();
                     if (h != null) {
                         fillHouseFieldsWithValueOf(h);
                         isEditingHouse = true;
                     }
-                } else {
+                } else if (e.getClickCount() == 1) {
+                    House h = (House) houseList.getSelectedValue();
                     showRoomListFor(h);
                     isEditingHouse = false;
                 }
             }
         });
+    }
+
+    private void styleButton(JButton button) {
+        if (button == null) return;
+        button.setBorder(new RoundedCornerBorder(8));
     }
 
     private void styleTextField(JTextField field) {
@@ -287,6 +308,15 @@ public class MainFrame extends JFrame {
         styleJList(constraintList);
         styleJList(houseList);
 
+        styleButton(addRoomButton);
+        styleButton(removeRoomButton);
+        styleButton(addConstraintButton);
+        styleButton(removeConstraintButton);
+        styleButton(generateButton);
+        styleButton(resetButton);
+        styleButton(removeHouseButton);
+        styleButton(saveHouseButton);
+
         SwingUtilities.invokeLater(() -> styleScrollPanes(mainPanel));
 
         pack(); // Adjust frame size based on content | Can be replaced with setSize()
@@ -302,17 +332,6 @@ public class MainFrame extends JFrame {
         constraintList.setModel(constraintListModel);
         houseList.setModel(houseListModel);
 
-
-        ////// TO REMOVE /////
-        scaleField.setText("10");
-        landWidthField.setText("50");
-        landHeightField.setText("50");
-        House house = new House("Maison 1", 10, 10, 30, 30);
-        house.addRoom(new Room("Chambre 1", 12, 12));
-        house.addRoom(new Room("Salon", 12, 12));
-        house.addRoom(new Room("Cuisine", 12, 12));
-        houseListModel.addElement(house);//ne plus supprimer OU pas
-        showRoomListFor(house);
     }
 
     public void hideChangingPanel() {
@@ -369,7 +388,7 @@ public class MainFrame extends JFrame {
         PlanGenerator generator;
 
         if (houseListModel.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Il doit y avoir au moins une maison");
+            JOptionPane.showMessageDialog(this, "Il doit y avoir au moins une maison", "Erreur", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -397,7 +416,7 @@ public class MainFrame extends JFrame {
             generator.generate(landCopy, constraintManager);
 
         } catch (RuntimeException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage());
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
@@ -488,7 +507,7 @@ public class MainFrame extends JFrame {
         try {
             house = new House(name, x, y, w, h);
         } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(this, e.getMessage());
+            JOptionPane.showMessageDialog(this, e.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
             return house;
         }
 

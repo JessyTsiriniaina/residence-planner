@@ -23,6 +23,11 @@ public class ConstraintManagement {
     private final MainFrame parent;
     private Constraint existingConstraint;
 
+    private void styleButton(JButton button) {
+        if (button == null) return;
+        button.setBorder(new RoundedCornerBorder(8));
+    }
+
     private void styleComboBox(JComboBox<?> box) {
         if (box == null) return;
         box.setBorder(null);
@@ -34,6 +39,8 @@ public class ConstraintManagement {
         styleComboBox(firstRoom);
         styleComboBox(constraintBox);
         styleComboBox(secondRoom);
+        styleButton(cancelButton);
+        styleButton(OKButton);
         cancelButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
@@ -60,12 +67,12 @@ public class ConstraintManagement {
                 Room room2 = (Room) secondRoom.getSelectedItem();
 
                 if (room1.equals(room2)) {
-                    JOptionPane.showMessageDialog(parent, "Impossible de lier une pièce à elle-même.");
+                    JOptionPane.showMessageDialog(parent, "Impossible de lier une pièce à elle-même.", "Erreur", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
                 if (room1 == null || room2 == null) {
-                    JOptionPane.showMessageDialog(parent, "Veuillez selectionner deux pieces distinctes");
+                    JOptionPane.showMessageDialog(parent, "Veuillez selectionner deux pieces distinctes", "Erreur", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -75,14 +82,14 @@ public class ConstraintManagement {
 
                 if (existingConstraint == null) {
                     if (constraintAlreadyExists(newConstraint, null)) {
-                        JOptionPane.showMessageDialog(parent, "Cette contrainte existe déjà");
+                        JOptionPane.showMessageDialog(parent, "Cette contrainte existe déjà", "Erreur", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
 
                     parent.addConstraint(newConstraint);
                 } else {
                     if (constraintAlreadyExists(newConstraint, existingConstraint)) {
-                        JOptionPane.showMessageDialog(parent, "Cette contrainte existe déjà");
+                        JOptionPane.showMessageDialog(parent, "Cette contrainte existe déjà", "Erreur", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
 

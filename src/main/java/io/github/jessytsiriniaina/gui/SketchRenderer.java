@@ -72,11 +72,10 @@ public class SketchRenderer {
             g.drawString(name, x + (w - fm.stringWidth(name)) / 2, y + h / 2 + 4);
         }
 
-        drawOpenings(g, x, y, w, h, room.getDoors(), true, sc);
-        drawOpenings(g, x, y, w, h, room.getWindows(), false, sc);
+        drawOpenings(g, x, y, w, h, room.getOpenings(), sc);
     }
 
-    private void drawOpenings(Graphics2D g, int x, int y, int w, int h, List<? extends Opening> openings, boolean isDoor, ScaleConverter sc) {
+    private void drawOpenings(Graphics2D g, int x, int y, int w, int h, List<Opening> openings, ScaleConverter sc) {
         Map<Position, List<Opening>> byPos = new HashMap<>();
         for (Opening op : openings) {
             byPos.computeIfAbsent(op.getPosition(), k -> new ArrayList<>()).add(op);
@@ -91,7 +90,7 @@ public class SketchRenderer {
                 Opening op = list.get(i);
                 int size = Math.max(sc.toPixels(op.getWidth()), 8);
 
-                if (isDoor) {
+                if (op instanceof Door) {
                     g.setColor(Colors.DOOR);
                     g.setStroke(new BasicStroke(4));
                 } else {

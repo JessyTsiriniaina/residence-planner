@@ -89,7 +89,7 @@ public class RoomManagement {
                     width = Double.parseDouble(roomWidth.getText());
                     height = Double.parseDouble(roomHeight.getText());
                 } catch (NumberFormatException e) {
-                    JOptionPane.showMessageDialog(parent, "Veuillez entrer des valeurs numériques valides pour la longueur et la largeur");
+                    JOptionPane.showMessageDialog(parent, "Veuillez entrer des valeurs numériques valides pour la longueur et la largeur", "Erreur", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -97,7 +97,7 @@ public class RoomManagement {
                 try {
                     newRoom = new Room(name, width, height);
                 } catch (IllegalArgumentException e) {
-                    JOptionPane.showMessageDialog(parent, e.getMessage());
+                    JOptionPane.showMessageDialog(parent, e.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -111,14 +111,14 @@ public class RoomManagement {
 
                 if (existingRoom == null) {
                     if (roomAlreadyExists(newRoom, null)) {
-                        JOptionPane.showMessageDialog(parent, "Une pièce portant ce nom existe déjà.");
+                        JOptionPane.showMessageDialog(parent, "Une pièce portant ce nom existe déjà.", "Erreur", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
 
                     parent.addRoom(house, newRoom);
                 } else {
                     if (roomAlreadyExists(newRoom, existingRoom)) {
-                        JOptionPane.showMessageDialog(parent, "Une pièce portant ce nom existe déjà.");
+                        JOptionPane.showMessageDialog(parent, "Une pièce portant ce nom existe déjà.", "Erreur", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
 
@@ -206,7 +206,7 @@ public class RoomManagement {
             @Override
             public void actionPerformed(ActionEvent actionEvent) {
                 if (positionBox.getSelectedItem().equals(Position.NONE)) {
-                    JOptionPane.showMessageDialog(parent, "Veuillez sélectionner une position.");
+                    JOptionPane.showMessageDialog(parent, "Veuillez sélectionner une position.", "Erreur", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -217,15 +217,15 @@ public class RoomManagement {
                     offset = Double.parseDouble(offsetField.getText());
                     width = Double.parseDouble(openingWidthField.getText());
                     if (width <= 0) {
-                        JOptionPane.showMessageDialog(parent, "La largeur de l'ouverture doit être positive.");
+                        JOptionPane.showMessageDialog(parent, "La largeur de l'ouverture doit être positive.", "Erreur", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     if (offset < 0) {
-                        JOptionPane.showMessageDialog(parent, "L'offset ne peut pas être négatif.");
+                        JOptionPane.showMessageDialog(parent, "L'offset ne peut pas être négatif.", "Erreur", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                 } catch (NumberFormatException e) {
-                    JOptionPane.showMessageDialog(parent, "Veuillez entrer des valeurs numériques valides pour l'offset et la largeur.");
+                    JOptionPane.showMessageDialog(parent, "Veuillez entrer des valeurs numériques valides pour l'offset et la largeur.", "Erreur", JOptionPane.ERROR_MESSAGE);
                     return;
                 }
 
@@ -235,7 +235,7 @@ public class RoomManagement {
                         editingOpening.setOffset(offset);
                         editingOpening.setWidth(width);
                     } catch (IllegalArgumentException e) {
-                        JOptionPane.showMessageDialog(parent, e.getMessage());
+                        JOptionPane.showMessageDialog(parent, e.getMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
                     doorList.repaint();
@@ -255,6 +255,11 @@ public class RoomManagement {
                 openingConfigurationPanel.setVisible(false);
             }
         });
+    }
+
+    private void styleButton(JButton button) {
+        if (button == null) return;
+        button.setBorder(new RoundedCornerBorder(8));
     }
 
     private void styleTextField(JTextField field) {
@@ -302,6 +307,16 @@ public class RoomManagement {
         styleJList(doorList);
         styleJList(windowList);
         styleComboBox(positionBox);
+
+        styleButton(cancelRoomConfigurationButton);
+        styleButton(OKRoomConfigurationButton);
+        styleButton(deleteDoorButton);
+        styleButton(addDoorButton);
+        styleButton(deleteWindowButton);
+        styleButton(addWIndowButton);
+        styleButton(cancelOpeningConfigurationButton);
+        styleButton(OKOpeningConfigurationButton);
+
         SwingUtilities.invokeLater(() -> styleScrollPanes(roomManagementPanel));
 
         doorList.setModel(doorListModel);

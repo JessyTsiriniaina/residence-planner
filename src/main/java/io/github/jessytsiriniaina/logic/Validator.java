@@ -118,15 +118,20 @@ public class Validator {
                 }
 
                 // 7.2. Check overlap collision on the same wall
+                double[] actualPositions = new double[wallOpenings.size()];
+                for (int k = 0; k < wallOpenings.size(); k++) {
+                    Opening op = wallOpenings.get(k);
+                    actualPositions[k] = (op.getOffset() > 0)
+                            ? op.getOffset()
+                            : wallLength * (k + 1.0) / (wallOpenings.size() + 1.0);
+                }
                 for (int k = 0; k < wallOpenings.size() - 1; k++) {
                     Opening current = wallOpenings.get(k);
                     Opening next = wallOpenings.get(k + 1);
-                    if (current.getOffset() > 0 && next.getOffset() > 0) {
-                        double currentEnd = current.getOffset() + current.getWidth() / 2.0;
-                        double nextStart = next.getOffset() - next.getWidth() / 2.0;
-                        if (currentEnd > nextStart) {
-                            errors.add("Collision d'ouvertures détectée sur le mur " + pos + " de '" + room.getName() + "'.");
-                        }
+                    double currentEnd = actualPositions[k] + current.getWidth() / 2.0;
+                    double nextStart = actualPositions[k + 1] - next.getWidth() / 2.0;
+                    if (currentEnd > nextStart) {
+                        errors.add("Collision d'ouvertures sur le mur " + pos + " de '" + room.getName() + "' entre " + current + " et " + next + ".");
                     }
                 }
             }
