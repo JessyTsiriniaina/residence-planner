@@ -64,7 +64,3 @@ This project is primarily designed to be launched from an IDE such as IntelliJ I
 ## Notes
 
 The project includes a `TODO.md` file tracking planned improvements and remaining work items, including PDF export and several UI/logic refinements.
-
-## License
-
-This project currently does not specify a license.
